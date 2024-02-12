@@ -1,8 +1,6 @@
 from solcx import compile_standard, install_solc, set_solc_version
 import json
 
-import solcx
-
 # Set the Solidity compiler version to use
 set_solc_version('0.8.24')
 
