@@ -1,0 +1,18 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "description": "This project combines a Solidity smart contract with a neural network implemented in PyTorch to create a decentralized prediction system for XOR logic gates.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@waves/provider-keeper": "^2.0.9",
+    "@waves/signer": "^1.1.0",
+    "@waves/waves-transactions": "^4.3.11",
+    "tslib": "^2.6.2"
+  }
+}

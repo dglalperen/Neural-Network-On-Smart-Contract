@@ -15,58 +15,60 @@ class XORNet(nn.Module):
         x = torch.sigmoid(self.layer1(x))
         x = torch.sigmoid(self.layer2(x))
         return x
-    
-# Initialize the network, loss function, and optimizer
-xor_net = XORNet()
-criterion = nn.MSELoss()
-optimizer = optim.SGD(xor_net.parameters(), lr=0.1)
 
-# XOR input and output
-X = torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=torch.float)
-Y = torch.tensor([[0], [1], [1], [0]], dtype=torch.float)
 
-# Lists for storing loss and accuracy values
-losses = []
-outputs = []
+if __name__ == "__main__":
+    # Initialize the network, loss function, and optimizer
+    xor_net = XORNet()
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(xor_net.parameters(), lr=0.1)
 
-# Train the network
-epochs = 40000
-for epoch in range(epochs):  # Increased epochs for better convergence
-    optimizer.zero_grad()
-    output = xor_net(X)
-    loss = criterion(output, Y)
-    loss.backward()
-    optimizer.step()
+    # XOR input and output
+    X = torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=torch.float)
+    Y = torch.tensor([[0], [1], [1], [0]], dtype=torch.float)
 
-    # Store loss
-    losses.append(loss.item())
+    # Lists for storing loss and accuracy values
+    losses = []
+    outputs = []
 
-    # Print loss
-    if epoch % 1000 == 0:
-        print(f'Epoch [{epoch}/{epochs}] Loss: {loss.item()}')
+    # Train the network
+    epochs = 40000
+    for epoch in range(epochs):  # Increased epochs for better convergence
+        optimizer.zero_grad()
+        output = xor_net(X)
+        loss = criterion(output, Y)
+        loss.backward()
+        optimizer.step()
 
-# Store final output
-with torch.no_grad():
-    for inp in X:
-        outputs.append(xor_net(inp).item())
+        # Store loss
+        losses.append(loss.item())
 
-# Plotting the loss over epochs
-plt.figure(figsize=(10, 5))
-plt.plot(losses, label='Loss')
-plt.title('Training Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
+        # Print loss
+        if epoch % 1000 == 0:
+            print(f'Epoch [{epoch}/{epochs}] Loss: {loss.item()}')
 
-# Plotting the output after training
-plt.figure(figsize=(10, 5))
-plt.plot(outputs, 'ro', label='Final Outputs')
-plt.title('Network Outputs after Training')
-plt.xlabel('Input Configurations')
-plt.ylabel('Output Value')
-plt.xticks(range(4), ['[0,0]', '[0,1]', '[1,0]', '[1,1]'])
-plt.legend()
-plt.show()
+    # Store final output
+    with torch.no_grad():
+        for inp in X:
+            outputs.append(xor_net(inp).item())
 
-torch.save(xor_net.state_dict(), 'xor_net_model.pth')
+    # Plotting the loss over epochs
+    plt.figure(figsize=(10, 5))
+    plt.plot(losses, label='Loss')
+    plt.title('Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+    # Plotting the output after training
+    plt.figure(figsize=(10, 5))
+    plt.plot(outputs, 'ro', label='Final Outputs')
+    plt.title('Network Outputs after Training')
+    plt.xlabel('Input Configurations')
+    plt.ylabel('Output Value')
+    plt.xticks(range(4), ['[0,0]', '[0,1]', '[1,0]', '[1,1]'])
+    plt.legend()
+    plt.show()
+
+    torch.save(xor_net.state_dict(), 'xor_net.pth')
