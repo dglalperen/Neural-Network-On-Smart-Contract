@@ -1,10 +1,12 @@
 import torch
 
 # Path to the saved model state
-model_path = './model/xor_net.pth'
+model_path = './xor_net.pth'
 
 # Load the saved model state
 xor_net_state = torch.load(model_path, map_location=torch.device('cpu'))
+
+print("State", xor_net_state)
 
 # Extracting weights and biases
 layer1_weights = xor_net_state['layer1.weight'].numpy()

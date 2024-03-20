@@ -2,45 +2,67 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let layer1Weights = [[4051769, 4062273], [-5948515, -6010085]]
-let layer1Biases = [-6307843, 2229872]
-let layer2Weights = [[-8372358, -8139317]]
-let layer2Biases = [4083679]
+let layer1Weights = [[4721113, -5002107], [6226846, -6353789]]
+let layer1Biases = [-2521378, 3389498]
+let layer2Weights = [[8109936, -7559760]]
+let layer2Biases = [3490942]
 
-func sigmoid(z: Int) = {
-  let e = 2718281 # e approximated to 1e6 precision
-  let base = 1000000
-  let negativeZ = -1 * z
-  let expPart = fraction(e, negativeZ, base) 
-  fraction(base, 1000000, base + expPart)
+func sigmoid(z: Int, debugPrefix: String) = {
+    let e = 2718281  # e scaled by 1,000,000
+    let base = 1000000
+    # Avoid direct negative manipulation, ensure z is positive for exp(-z)
+    let positiveZ = if (z < 0) then -z else z
+    let expPart = fraction(e, base, positiveZ)  # e^(-z) approximation
+
+    # Ensuring the sigmoid output is calculated correctly
+    let sigValue = fraction(base, base, base + expPart)
+
+    # Return debug info along with the sigmoid value
+    (
+        [IntegerEntry(debugPrefix + "positiveZ", positiveZ), 
+         IntegerEntry(debugPrefix + "expPart", expPart),
+         IntegerEntry(debugPrefix + "sigValue", sigValue)],
+        sigValue
+    )
 }
+
 
 func dotProduct(a: List[Int], b: List[Int]) = {
-  let product0 = fraction(a[0], b[0], 1000000)
-  let product1 = fraction(a[1], b[1], 1000000)
-  product0 + product1
+    let product0 = fraction(a[0], b[0], 1000000)
+    let product1 = fraction(a[1], b[1], 1000000)
+    product0 + product1
 }
 
-func forwardPass(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
-  let sum0 = dotProduct(input, weights[0]) + biases[0]
-  let sum1 = dotProduct(input, weights[1]) + biases[1]
-  let sig0 = sigmoid(sum0)
-  let sig1 = sigmoid(sum1)
-  [sig0, sig1]
+func forwardPass(input: List[Int], weights: List[List[Int]], biases: List[Int], layer: String) = {
+    let sum0 = dotProduct(input, weights[0]) + biases[0]
+    let sum1 = dotProduct(input, weights[1]) + biases[1]
+    let (sigmoidDebug0, sig0) = sigmoid(sum0, layer + "L1N1")
+    let (sigmoidDebug1, sig1) = sigmoid(sum1, layer + "L1N2")
+    (
+        [sig0, sig1, sum0, sum1],
+        sigmoidDebug0 ++ sigmoidDebug1
+    )
 }
 
 func xorNeuralNetwork(input1: Int, input2: Int) = {
-  let input = [input1, input2]
-  let hiddenLayerOutput = forwardPass(input, layer1Weights, layer1Biases)
-  let outputLayerSum = dotProduct(hiddenLayerOutput, layer2Weights[0]) + layer2Biases[0]
-  let output = sigmoid(outputLayerSum)
-  output
+    let input = [input1, input2]
+    let (hiddenLayerOutput, hiddenDebug) = forwardPass(input, layer1Weights, layer1Biases, "HL")
+    let (outputDebug, output) = sigmoid(dotProduct([hiddenLayerOutput[0], hiddenLayerOutput[1]], layer2Weights[0]) + layer2Biases[0], "OL")
+    (
+        [output, dotProduct([hiddenLayerOutput[0], hiddenLayerOutput[1]], layer2Weights[0]) + layer2Biases[0], hiddenLayerOutput[2], hiddenLayerOutput[3]],
+        hiddenDebug ++ outputDebug
+    )
 }
 
 @Callable(i)
-func predict(inputData: Int) = {
-  let input1 = if(inputData == 0 || inputData == 1) then 0 else 1000000
-  let input2 = if(inputData == 0 || inputData == 2) then 0 else 1000000
-  let result = xorNeuralNetwork(input1, input2)
-  [IntegerEntry("result", result)]
+func predict(input1: Int, input2: Int) = {
+    let scaledInput1 = if(input1 == 1) then 1000000 else 0
+    let scaledInput2 = if(input2 == 1) then 1000000 else 0
+    let (networkOutputs, debugEntries) = xorNeuralNetwork(scaledInput1, scaledInput2)
+    [
+        IntegerEntry("result", networkOutputs[0]),
+        IntegerEntry("outputLayerSum", networkOutputs[1]),
+        IntegerEntry("hiddenLayerOutput1Sum", networkOutputs[2]),
+        IntegerEntry("hiddenLayerOutput2Sum", networkOutputs[3])
+    ] ++ debugEntries
 }
