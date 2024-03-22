@@ -1,4 +1,4 @@
-from training_model import XORNet
+from TwoLayerXOR.train import XORNet
 import torch
 import hashlib
 import numpy as np

@@ -2,24 +2,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
-
-# Define the XOR class
-class XORNet(nn.Module):
-    def __init__(self):
-        super(XORNet, self).__init__()
-        # Define network layers
-        self.layer1 = nn.Linear(2, 2)
-        self.layer2 = nn.Linear(2, 1)
-
-    def forward(self, x):
-        x = torch.sigmoid(self.layer1(x))
-        x = torch.sigmoid(self.layer2(x))
-        return x
+from TwoLayerXORNet import TwoLayerXORNet
 
 
 if __name__ == "__main__":
     # Initialize the network, loss function, and optimizer
-    xor_net = XORNet()
+    xor_net = TwoLayerXORNet()
     criterion = nn.MSELoss()
     optimizer = optim.SGD(xor_net.parameters(), lr=0.1)
 
@@ -52,23 +40,4 @@ if __name__ == "__main__":
         for inp in X:
             outputs.append(xor_net(inp).item())
 
-    # Plotting the loss over epochs
-    plt.figure(figsize=(10, 5))
-    plt.plot(losses, label='Loss')
-    plt.title('Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.show()
-
-    # Plotting the output after training
-    plt.figure(figsize=(10, 5))
-    plt.plot(outputs, 'ro', label='Final Outputs')
-    plt.title('Network Outputs after Training')
-    plt.xlabel('Input Configurations')
-    plt.ylabel('Output Value')
-    plt.xticks(range(4), ['[0,0]', '[0,1]', '[1,0]', '[1,1]'])
-    plt.legend()
-    plt.show()
-
-    torch.save(xor_net.state_dict(), 'xor_net.pth')
+    torch.save(xor_net.state_dict(), 'two_layer_xor_net.pth')

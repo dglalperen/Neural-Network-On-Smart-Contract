@@ -9,7 +9,7 @@ layer2Weights = np.array([[-8.372358, -8.139317]])
 layer2Biases = np.array([4.0836797])
 
 # For input '1', we translate it to XOR input (0, 1)
-input_data = np.array([0, 1])
+input_data = np.array([0, 0])
 
 hidden_layer_output = sigmoid(np.dot(input_data, layer1Weights.T) + layer1Biases)
 output = sigmoid(np.dot(hidden_layer_output, layer2Weights.T) + layer2Biases)

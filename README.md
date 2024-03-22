@@ -77,3 +77,14 @@ Make sure you have the following installed:
 This project is licensed under an UNKNOWN license.
 
 Feel free to modify and adapt the code to your specific needs. Enjoy building and experimenting with decentralized predictions using XOR logic!
+
+    func forwardPass(input: List[Int], weights: List[List[Int]], biases: List[Int], size: Int) = {{
+        let initOutputs = []
+        let indices = [0, 1, 2, 3]
+        FOLD<indices>(initOutputs, indices, {{(outputs, i) =>
+            if (i < size) then
+                outputs :+ sigmoid(dotProduct(input, getElement(weights, i)) + getElement(biases, i))
+            else
+                outputs
+        }})
+    }}
