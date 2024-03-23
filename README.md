@@ -1,51 +1,49 @@
 # PyTorch to Waves Smart Contract Converter
 
-This Python script converts PyTorch neural network models into smart contracts compatible with the Waves blockchain platform. The generated smart contracts can then be deployed on the Waves platform to make predictions based on the trained neural network models.
+This project provides a tool to convert PyTorch neural network models into Waves smart contracts. The generated smart contracts can then be deployed on the Waves blockchain for inference.
 
 ## Features
 
-- Converts PyTorch neural network models into Waves-compatible smart contracts.
-- Handles both two-layer and three-layer XOR neural network models.
-- Automatically generates smart contract code based on the structure and parameters of the input PyTorch models.
-- Supports sigmoid activation function and fractional arithmetic for compatibility with the Waves Ride language.
+- Convert PyTorch models into Waves smart contracts.
+- Support for models with specific layer configurations:
+  - Two input neurons in the first layer.
+  - Four neurons in the hidden layers.
+  - One neuron in the output layer.
 
-## Requirements
+## Installation
 
-- Python 3.x
-- PyTorch
-- Numpy
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/your_username/pytorch-to-waves-converter.git
+   ```
+
+2. Install the required dependencies:
+
+   ```bash
+   pip install torch
+   ```
 
 ## Usage
 
-1. Install the required Python packages:
+1. Place your PyTorch model files (`.pth`) in the `drag_torch_model` directory.
 
-```bash
-pip install torch numpy
-```
+2. Run the `main.py` script to convert the models into Waves smart contracts:
 
-2. Define and train your PyTorch neural network models. Ensure that the models are compatible with the provided converter script.
+   ```bash
+   python main.py
+   ```
 
-3. Place your trained PyTorch model files (`.pth`) in the appropriate directories (`./TwoLayerXOR/` and `./ThreeLayerXOR/`).
+3. The generated smart contracts will be saved in the same directory with the `.ride` extension.
 
-4. Run the converter script:
+## Example
 
-```bash
-python pytorch_to_waves_contract.py
-```
+Suppose you have a PyTorch model named `my_model.pth`, conforming to the supported layer configuration. After running the conversion script, a Waves smart contract named `my_model.ride` will be generated.
 
-5. The converted smart contract code will be printed to the console. Copy the code and deploy it to the Waves platform.
+## Contributing
 
-## File Structure
-
-- `pytorch_to_waves_contract.py`: Main Python script for converting PyTorch models to Waves smart contracts.
-- `TwoLayerXOR/`: Directory containing trained PyTorch models and scripts for the two-layer XOR neural network.
-- `ThreeLayerXOR/`: Directory containing trained PyTorch models and scripts for the three-layer XOR neural network.
+Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
-
-- This project was inspired by the need to deploy machine learning models on blockchain platforms.
-- The Waves platform documentation and community provided valuable insights into creating compatible smart contracts.

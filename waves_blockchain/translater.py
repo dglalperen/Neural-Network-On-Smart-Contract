@@ -102,7 +102,7 @@ def pytorch_to_waves_contract(model, scaling_factor=1000000):
     weight_bias_declarations = ""
     layers_info = []  # To store info about each layer
 
-    for name, param in model.named_parameters():
+    for name, param in model.items():
         formatted_name = name.replace('.', '_')
         if 'weight' in name:
             layer_idx = extract_layer_index(name) - 1
