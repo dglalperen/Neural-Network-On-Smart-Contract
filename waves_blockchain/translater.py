@@ -4,6 +4,10 @@ from TwoLayerXOR.TwoLayerXORNet import TwoLayerXORNet
 from ThreeLayerXOR.ThreeLayerXORNet import ThreeLayerXORNet
 import re
 
+def save_contract_to_file(contract_content, file_name):
+    with open(f"./generated_smart_contracts/{file_name}", 'w') as file:
+        file.write(contract_content)
+        
 def extract_layer_index(name):
     # This function attempts to extract the layer index from the parameter name using a regular expression.
     match = re.search(r'layer(\d+)', name)
@@ -12,12 +16,22 @@ def extract_layer_index(name):
     else:
         raise ValueError(f"Could not extract layer index from parameter name: {name}")
 
-def format_parameters(param, scaling_factor):
-    # Format the PyTorch parameter for RIDE, scaling and converting to integer
+def flatten(list_of_lists):
+    """Flatten a list of lists into a single list."""
+    return [item for sublist in list_of_lists for item in sublist]
+
+def format_parameters(param, scaling_factor, is_bias=False):
     param = param.detach().numpy()  # Assuming param is a tensor
-    scaled_param = (param * scaling_factor).astype(int)
-    formatted = ', '.join(str(x) for x in scaled_param.flatten())
+    if is_bias:
+        # Biases are still formatted as a single list
+        scaled_param = (param * scaling_factor).astype(int)
+        formatted = ', '.join(str(x) for x in scaled_param.flatten())
+    else:
+        # Weights need to be formatted as a list of lists
+        scaled_param = (param * scaling_factor).astype(int)
+        formatted = '[' + '], ['.join(', '.join(str(x) for x in row) for row in scaled_param) + ']'
     return formatted
+
 
 def generate_forward_pass_function(layer_num, num_neurons, is_output_layer):
     if is_output_layer:
@@ -63,9 +77,18 @@ def generate_predict_function(layers_info):
         else:  # Use output from the previous layer for subsequent layers
             predict_function += f"    let layer{i+1}Output = forwardPassLayer{i+1}(layer{i}Output, layer{i+1}Weights, layer{i+1}Biases)\n"
 
-    # Handle the output layer
+    # Adjusting for the output layer
     last_layer_num = len(layers_info)
-    predict_function += f"    let output = forwardPassLayer{last_layer_num}(layer{last_layer_num-1}Output, layer{last_layer_num}Weights, layer{last_layer_num}Biases)\n"
+    output_layer_weights = layers_info[-1]['weights']
+    if isinstance(output_layer_weights[0], list):  # Check if the weights are in a list of lists
+        output_layer_weights = flatten(output_layer_weights)  # Flatten the list of lists to a single list
+    
+    output_layer_biases = layers_info[-1]['biases']
+    # Ensure biases for the output layer are correctly passed as a single integer
+    if isinstance(output_layer_biases, list) and len(output_layer_biases) == 1:
+        output_layer_biases = output_layer_biases[0]  # Extract the single integer value
+
+    predict_function += f"    let output = forwardPassLayer{last_layer_num}(layer{last_layer_num-1}Output, {output_layer_weights}, {output_layer_biases})\n"
 
     # Construct the final output list
     predict_function += "    [\n"
@@ -85,11 +108,11 @@ def pytorch_to_waves_contract(model, scaling_factor=1000000):
             layer_idx = extract_layer_index(name) - 1
             while len(layers_info) <= layer_idx:
                 layers_info.append({'weights': None, 'biases': None, 'neurons': 0})
-            layers_info[layer_idx]['weights'] = format_parameters(param, scaling_factor)
+            layers_info[layer_idx]['weights'] = format_parameters(param, scaling_factor, is_bias=False)
             layers_info[layer_idx]['neurons'] = param.size(0)  # Number of output neurons in the layer
         elif 'bias' in name:
             layer_idx = extract_layer_index(name) - 1
-            layers_info[layer_idx]['biases'] = format_parameters(param, scaling_factor)
+            layers_info[layer_idx]['biases'] = format_parameters(param, scaling_factor, is_bias=True)
 
     # Generating weight and bias declarations
     for i, layer in enumerate(layers_info):
@@ -134,8 +157,9 @@ if __name__ == "__main__":
 
     # Convert the XORNet to a Waves smart contract
     contract = pytorch_to_waves_contract(xor_net)
-    print("2 Layer XOR Net Smart Contract:")
-    print(contract)
+    #print("2 Layer XOR Net Smart Contract:")
+    #print(contract)
+    save_contract_to_file(contract, 'TwoLayerXORNet.ride')
     
     # Three Layer XOR Net
     three_layer_xor_net = ThreeLayerXORNet()
@@ -143,5 +167,6 @@ if __name__ == "__main__":
     three_layer_xor_net_state = torch.load(model_path, map_location=torch.device('cpu'))
     three_layer_xor_net.load_state_dict(three_layer_xor_net_state)
     contract = pytorch_to_waves_contract(three_layer_xor_net)
-    print("3 Layer XOR Net Smart Contract:")
-    print(contract)
+    # print("3 Layer XOR Net Smart Contract:")
+    # print(contract)
+    save_contract_to_file(contract, 'ThreeLayerXORNet.ride')

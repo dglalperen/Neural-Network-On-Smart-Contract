@@ -1,90 +1,51 @@
-# XOR Predictions Smart Contract and Neural Network
+# PyTorch to Waves Smart Contract Converter
 
-This project combines a Solidity smart contract with a neural network implemented in PyTorch to create a decentralized prediction system for XOR logic gates.
+This Python script converts PyTorch neural network models into smart contracts compatible with the Waves blockchain platform. The generated smart contracts can then be deployed on the Waves platform to make predictions based on the trained neural network models.
 
-## Smart Contract (Solidity)
+## Features
 
-### Contract Overview
+- Converts PyTorch neural network models into Waves-compatible smart contracts.
+- Handles both two-layer and three-layer XOR neural network models.
+- Automatically generates smart contract code based on the structure and parameters of the input PyTorch models.
+- Supports sigmoid activation function and fractional arithmetic for compatibility with the Waves Ride language.
 
-- **Contract Name**: XOR_Predictions
-- **SPDX-License-Identifier**: UNKNOWN
-- **Solidity Version**: ^0.8.0
+## Requirements
 
-### Functions
-
-1. **storePrediction(bytes32 inputHash, bool prediction)**
-
-   - Stores a prediction for a given input hash.
-   - Input: `inputHash` - a unique hash of the input data, `prediction` - the predicted boolean value.
-   - Access: Public
-   - State Change: Modifies the `predictions` mapping.
-
-2. **verifyPrediction(bytes32 inputHash, bool prediction)**
-   - Verifies a prediction for a given input hash.
-   - Input: `inputHash` - a unique hash of the input data, `prediction` - the expected boolean value.
-   - Access: Public View
-   - Returns: `true` if the stored prediction matches the expected prediction, `false` otherwise.
-
-## Python Scripts
-
-### 1. Connecting to Ethereum Network
-
-Before interacting with the smart contract, make sure to set up your Infura API key in the `INFURA_API_KEY` variable and specify the contract address (`contract_address`) and ABI (`contract_abi`) for your deployed contract.
-
-### 2. Neural Network for XOR Logic
-
-The Python script includes the following components:
-
-- **XORNet class**: A PyTorch neural network model for XOR logic.
-- **Training**: Training the XORNet with XOR input and output data.
-- **Loss Plotting**: Visualizing the loss during training.
-- **Output Plotting**: Visualizing the network outputs after training.
-- **Model Saving**: Saving the trained model to `xor_net_model.pth`.
-
-### 3. Using the Neural Network for Predictions
-
-This script allows you to load the trained XOR neural network model (`xor_net_model.pth`) and make predictions on XOR input data.
-
-### 4. Hashing Inputs
-
-The script provides a function to hash input data using SHA-256.
-
-### 5. Deploying the Smart Contract
-
-This script compiles and deploys the XOR_Predictions smart contract using Solidity. It sets the Solidity compiler version to 0.8.24, compiles the contract, and prints the compiled output.
-
-## Prerequisites
-
-Make sure you have the following installed:
-
-- Python 3
+- Python 3.x
 - PyTorch
-- Web3.py
-- Matplotlib
-- Solidity Compiler (solc)
+- Numpy
 
-## Getting Started
+## Usage
 
-1. Clone this repository.
-2. Set up your Infura API key in the Python script.
-3. Deploy the smart contract using the provided Solidity code.
-4. Train the XOR neural network using the Python script.
-5. Make predictions on XOR input data using the neural network.
-6. Hash input data as needed.
+1. Install the required Python packages:
+
+```bash
+pip install torch numpy
+```
+
+2. Define and train your PyTorch neural network models. Ensure that the models are compatible with the provided converter script.
+
+3. Place your trained PyTorch model files (`.pth`) in the appropriate directories (`./TwoLayerXOR/` and `./ThreeLayerXOR/`).
+
+4. Run the converter script:
+
+```bash
+python pytorch_to_waves_contract.py
+```
+
+5. The converted smart contract code will be printed to the console. Copy the code and deploy it to the Waves platform.
+
+## File Structure
+
+- `pytorch_to_waves_contract.py`: Main Python script for converting PyTorch models to Waves smart contracts.
+- `TwoLayerXOR/`: Directory containing trained PyTorch models and scripts for the two-layer XOR neural network.
+- `ThreeLayerXOR/`: Directory containing trained PyTorch models and scripts for the three-layer XOR neural network.
 
 ## License
 
-This project is licensed under an UNKNOWN license.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Feel free to modify and adapt the code to your specific needs. Enjoy building and experimenting with decentralized predictions using XOR logic!
+## Acknowledgements
 
-    func forwardPass(input: List[Int], weights: List[List[Int]], biases: List[Int], size: Int) = {{
-        let initOutputs = []
-        let indices = [0, 1, 2, 3]
-        FOLD<indices>(initOutputs, indices, {{(outputs, i) =>
-            if (i < size) then
-                outputs :+ sigmoid(dotProduct(input, getElement(weights, i)) + getElement(biases, i))
-            else
-                outputs
-        }})
-    }}
+- This project was inspired by the need to deploy machine learning models on blockchain platforms.
+- The Waves platform documentation and community provided valuable insights into creating compatible smart contracts.
