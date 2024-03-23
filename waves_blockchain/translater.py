@@ -32,29 +32,46 @@ def format_parameters(param, scaling_factor, is_bias=False):
         formatted = '[' + '], ['.join(', '.join(str(x) for x in row) for row in scaled_param) + ']'
     return formatted
 
+def generate_sigmoid_function():
+    return '''
+    func sigmoid(z: Int, debugPrefix: String) = {
+        let e = 2718281  # e scaled by 1,000,000
+        let base = 1000000
+        let positiveZ = if (z < 0) then -z else z
+        let expPart = fraction(e, base, positiveZ)
+        let sigValue = fraction(base, base, base + expPart)
+        (
+            [IntegerEntry(debugPrefix + "positiveZ", positiveZ), 
+             IntegerEntry(debugPrefix + "expPart", expPart),
+             IntegerEntry(debugPrefix + "sigValue", sigValue)],
+            sigValue
+        )
+    }
+    '''
 
-def generate_forward_pass_function(layer_num, num_neurons, is_output_layer):
+def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=False):
     if is_output_layer:
-        input_weights = " + ".join([f"fraction(input[{i}], weights[0], 1000000)" for i in range(num_neurons)])  # Adjusted weights indexing for output layer
-        return f"""
-        func forwardPassLayer{layer_num}(input: List[Int], weights: List[Int], bias: Int) = {{
+        input_weights = " + ".join([f"fraction(input[{i}], weights[0], 1000000)" for i in range(num_neurons)])
+        return f'''
+        func forwardPassLayer{layer_num}(input: List[Int], weights: List[Int], bias: Int, debugPrefix: String) = {{
             let dotProduct = {input_weights}
             let sum = dotProduct + bias
-            sigmoid(sum)
+            sigmoid(sum, debugPrefix)
         }}
-        """
+        '''
     else:
         sums = "\n    ".join([f"let sum{i} = " + " + ".join([f"fraction(input[{j}], weights[{i}][{j}], 1000000)" for j in range(num_neurons)]) + f" + biases[{i}]" for i in range(num_neurons)])
-        sigs = "\n    ".join([f"let sig{i} = sigmoid(sum{i})" for i in range(num_neurons)])
+        sigs = "\n    ".join([f"let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + \"L{i}N{j}\")" for i in range(num_neurons) for j in range(1)])
+        debug_entries = "++".join([f"debug{i}" for i in range(num_neurons)])
         outputs = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]"
         
-        return f"""
-        func forwardPassLayer{layer_num}(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {{
+        return f'''
+        func forwardPassLayer{layer_num}(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {{
             {sums}
             {sigs}
-            {outputs}
+            ({outputs}, {debug_entries})
         }}
-        """
+        '''
         
 def generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer):
     layer_functions = ""
@@ -72,27 +89,28 @@ def generate_predict_function(layers_info):
     predict_function += "    let inputs = [scaledInput1, scaledInput2]\n"
 
     for i, layer in enumerate(layers_info[:-1]):  # Iterate through layers except the output layer
+        debug_prefix = f'"Layer{i+1}"'
         if i == 0:  # Directly use inputs for the first layer
-            predict_function += f"    let layer{i+1}Output = forwardPassLayer{i+1}(inputs, layer{i+1}Weights, layer{i+1}Biases)\n"
+            predict_function += f"    let (layer{i+1}Output, debugLayer{i+1}) = forwardPassLayer{i+1}(inputs, layer{i+1}Weights, layer{i+1}Biases, {debug_prefix})\n"
         else:  # Use output from the previous layer for subsequent layers
-            predict_function += f"    let layer{i+1}Output = forwardPassLayer{i+1}(layer{i}Output, layer{i+1}Weights, layer{i+1}Biases)\n"
+            predict_function += f"    let (layer{i+1}Output, debugLayer{i+1}) = forwardPassLayer{i+1}(layer{i}Output, layer{i+1}Weights, layer{i+1}Biases, {debug_prefix})\n"
 
     # Adjusting for the output layer
     last_layer_num = len(layers_info)
     output_layer_weights = layers_info[-1]['weights']
     if isinstance(output_layer_weights[0], list):  # Check if the weights are in a list of lists
         output_layer_weights = flatten(output_layer_weights)  # Flatten the list of lists to a single list
-    
+
     output_layer_biases = layers_info[-1]['biases']
-    # Ensure biases for the output layer are correctly passed as a single integer
     if isinstance(output_layer_biases, list) and len(output_layer_biases) == 1:
         output_layer_biases = output_layer_biases[0]  # Extract the single integer value
 
-    predict_function += f"    let output = forwardPassLayer{last_layer_num}(layer{last_layer_num-1}Output, {output_layer_weights}, {output_layer_biases})\n"
+    output_layer_index = f'"Layer{last_layer_num}"'
+    predict_function += f"    let (output, debugLayerLast) = forwardPassLayer{last_layer_num}(layer{last_layer_num-1}Output, {output_layer_weights}, {output_layer_biases}, {output_layer_index})\n"
 
-    # Construct the final output list
+    # Construct the final output list including debug entries, correctly formatted
     predict_function += "    [\n"
-    predict_function += "        IntegerEntry(\"result\", output)\n"
+    predict_function += "        IntegerEntry(\"result\", output[0].value)\n"
     predict_function += "    ]\n"
     predict_function += "}"
 
@@ -125,6 +143,8 @@ def pytorch_to_waves_contract(model, scaling_factor=1000000):
     forward_pass_functions = generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer)
 
     predict_function = generate_predict_function(layers_info)
+    
+    sigmoid_function = generate_sigmoid_function()
 
     # Construct the contract template
     contract_template = f"""
@@ -134,13 +154,7 @@ def pytorch_to_waves_contract(model, scaling_factor=1000000):
     
     {weight_bias_declarations}
     
-    func sigmoid(z: Int) = {{
-        let e = 2718281
-        let base = 1000000
-        let positiveZ = if (z < 0) then -z else z
-        let expPart = fraction(e, base, positiveZ)
-        fraction(base, base, base + expPart)
-    }}
+    {sigmoid_function}
 
     {forward_pass_functions}
 

@@ -11,39 +11,47 @@
     let layer3Biases = [-192349]
     
     
-    func sigmoid(z: Int) = {
-        let e = 2718281
+    
+    func sigmoid(z: Int, debugPrefix: String) = {
+        let e = 2718281  # e scaled by 1,000,000
         let base = 1000000
         let positiveZ = if (z < 0) then -z else z
         let expPart = fraction(e, base, positiveZ)
-        fraction(base, base, base + expPart)
+        let sigValue = fraction(base, base, base + expPart)
+        (
+            [IntegerEntry(debugPrefix + "positiveZ", positiveZ), 
+             IntegerEntry(debugPrefix + "expPart", expPart),
+             IntegerEntry(debugPrefix + "sigValue", sigValue)],
+            sigValue
+        )
     }
+    
 
     
-        func forwardPassLayer1(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
+        func forwardPassLayer1(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
             let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + fraction(input[2], weights[0][2], 1000000) + fraction(input[3], weights[0][3], 1000000) + biases[0]
     let sum1 = fraction(input[0], weights[1][0], 1000000) + fraction(input[1], weights[1][1], 1000000) + fraction(input[2], weights[1][2], 1000000) + fraction(input[3], weights[1][3], 1000000) + biases[1]
     let sum2 = fraction(input[0], weights[2][0], 1000000) + fraction(input[1], weights[2][1], 1000000) + fraction(input[2], weights[2][2], 1000000) + fraction(input[3], weights[2][3], 1000000) + biases[2]
     let sum3 = fraction(input[0], weights[3][0], 1000000) + fraction(input[1], weights[3][1], 1000000) + fraction(input[2], weights[3][2], 1000000) + fraction(input[3], weights[3][3], 1000000) + biases[3]
-            let sig0 = sigmoid(sum0)
-    let sig1 = sigmoid(sum1)
-    let sig2 = sigmoid(sum2)
-    let sig3 = sigmoid(sum3)
-            [sig0, sig1, sig2, sig3]
+            let (debug0, sig0) = sigmoid(sum0, debugPrefix + "L0N0")
+    let (debug1, sig1) = sigmoid(sum1, debugPrefix + "L1N0")
+    let (debug2, sig2) = sigmoid(sum2, debugPrefix + "L2N0")
+    let (debug3, sig3) = sigmoid(sum3, debugPrefix + "L3N0")
+            ([sig0, sig1, sig2, sig3], debug0++debug1++debug2++debug3)
         }
         
-        func forwardPassLayer2(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
+        func forwardPassLayer2(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
             let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + biases[0]
     let sum1 = fraction(input[0], weights[1][0], 1000000) + fraction(input[1], weights[1][1], 1000000) + biases[1]
-            let sig0 = sigmoid(sum0)
-    let sig1 = sigmoid(sum1)
-            [sig0, sig1]
+            let (debug0, sig0) = sigmoid(sum0, debugPrefix + "L0N0")
+    let (debug1, sig1) = sigmoid(sum1, debugPrefix + "L1N0")
+            ([sig0, sig1], debug0++debug1)
         }
         
-        func forwardPassLayer3(input: List[Int], weights: List[Int], bias: Int) = {
+        func forwardPassLayer3(input: List[Int], weights: List[Int], bias: Int, debugPrefix: String) = {
             let dotProduct = fraction(input[0], weights[0], 1000000) + fraction(input[1], weights[0], 1000000)
             let sum = dotProduct + bias
-            sigmoid(sum)
+            sigmoid(sum, debugPrefix)
         }
         
 
@@ -52,11 +60,11 @@ func predict(input1: Int, input2: Int) = {
     let scaledInput1 = if(input1 == 1) then 1000000 else 0
     let scaledInput2 = if(input2 == 1) then 1000000 else 0
     let inputs = [scaledInput1, scaledInput2]
-    let layer1Output = forwardPassLayer1(inputs, layer1Weights, layer1Biases)
-    let layer2Output = forwardPassLayer2(layer1Output, layer2Weights, layer2Biases)
-    let output = forwardPassLayer3(layer2Output, [-8939640, 9517362], -192349)
+    let (layer1Output, debugLayer1) = forwardPassLayer1(inputs, layer1Weights, layer1Biases, "Layer1")
+    let (layer2Output, debugLayer2) = forwardPassLayer2(layer1Output, layer2Weights, layer2Biases, "Layer2")
+    let (output, debugLayerLast) = forwardPassLayer3(layer2Output, [-8939640, 9517362], -192349, "Layer3")
     [
-        IntegerEntry("result", output)
+        IntegerEntry("result", output[0].value)
     ]
 }
     

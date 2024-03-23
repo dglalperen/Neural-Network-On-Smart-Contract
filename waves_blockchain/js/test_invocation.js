@@ -3,6 +3,7 @@ const nodeUrl = "https://nodes-testnet.wavesnodes.com";
 
 // Define your dApp address and the account details
 const dAppAddress = "3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY";
+const dAppAddressIDE = "3NBwmKwBV3F4vBVoAUJfqVhV67oenSHaqRV";
 const seed =
   "aisle grit neutral neglect midnight blur energy lady mention gesture engage wheel foster juice domain";
 
@@ -80,7 +81,7 @@ const signedTx11 = invokeScript(
   seed
 );
 
-broadcast(signedTx00, nodeUrl)
+broadcast(signedTx01, nodeUrl)
   .then((response) => {
     console.log("Response", response);
   })
