@@ -59,7 +59,7 @@ def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, incl
     for i in range(num_neurons):
         input_refs = [f"input[{j}]" for j in range(num_neurons)] if not is_output_layer else ["input[0]", "input[1]"]
         weights_refs = [f"weights[{i}][{j}]" for j in range(num_neurons)] if not is_output_layer else [f"weights[0]", f"weights[1]"]
-        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)]) + f" + biases[{i}]"
+        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)]) + f" + {f'biases[{i}]' if not is_output_layer else 'biases'}"
         
         sums.append(f"let sum{i} = {sum_exp}")
         sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
