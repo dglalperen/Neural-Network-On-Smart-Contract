@@ -6,6 +6,9 @@ __pycache__/
 # everything inside secrets folder
 */secrets/*
 
+# everything inside generated_smart_contracts folder
+generated_smart_contracts/
+
 node_modules/
 
 # Environment variables

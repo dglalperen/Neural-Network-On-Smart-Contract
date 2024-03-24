@@ -49,41 +49,36 @@ def generate_sigmoid_function():
     }
     '''
 
-def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=False):
-    function_lines = []
+def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=True):
+    # Initialize strings to hold function code
     sums = []
     sigs = []
-    debug_entries = []
+    debug_infos = []
 
-    if is_output_layer:
-        # Assuming a single output neuron for simplicity; adjust if your model differs
-        input_weights = " + ".join([f"fraction(input[{i}], weights[0], 1000000)" for i in range(num_neurons)])
-        sums.append(f"let sum = {input_weights} + biases")
-        sigs.append("let (debug, sig) = sigmoid(sum, debugPrefix)")
-        debug_entries.append("debug")
-        output = "sig"
-    else:
-        for i in range(num_neurons):
-            sums.append(f"let sum{i} = " + " + ".join([f"fraction(input[{j}], weights[{i}][{j}], 1000000)" for j in range(num_neurons)]) + f" + biases[{i}]")
-            sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
-            debug_entries.append(f"debug{i}")
-        output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]"
+    # Generate sums and sigmoid applications with debugging for each neuron
+    for i in range(num_neurons):
+        input_refs = [f"input[{j}]" for j in range(num_neurons)] if not is_output_layer else ["input[0]", "input[1]"]
+        weights_refs = [f"weights[{i}][{j}]" for j in range(num_neurons)] if not is_output_layer else [f"weights[0]", f"weights[1]"]
+        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)]) + f" + biases[{i}]"
+        
+        sums.append(f"let sum{i} = {sum_exp}")
+        sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
+        debug_infos.append(f"debug{i}")
 
-    # Combine all parts
-    function_lines.extend(sums)
-    function_lines.extend(sigs)
-    function_body = "\n    ".join(function_lines)
-    debug_info = " ++ ".join(debug_entries)
+    # Combine all parts into a complete function definition
+    function_body = "\n    ".join(sums + sigs)
+    debug_concat = " ++ ".join(debug_infos)
+    output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]" if not is_output_layer else "sig0"
 
-    # Generate the complete function definition
+    # Final function definition
     function_definition = f'''
-    func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[Int]' if is_output_layer else 'List[List[Int]]'}, biases: {'Int' if is_output_layer else 'List[Int]'}, debugPrefix: String) = {{
-        {function_body}
-        ({output}, {debug_info})
-    }}
-    '''
-    return function_definition
-       
+func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[List[Int]]' if not is_output_layer else 'List[Int]'}, biases: {'List[Int]' if not is_output_layer else 'Int'}, debugPrefix: String) = {{
+    {function_body}
+    ({output}, {debug_concat})
+}}
+'''
+    return function_definition.strip()
+     
 def generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer):
     layer_functions = ""
     # Generate functions for hidden layers
@@ -98,34 +93,26 @@ def generate_predict_function(layers_info):
     predict_function += "    let scaledInput1 = if(input1 == 1) then 1000000 else 0\n"
     predict_function += "    let scaledInput2 = if(input2 == 1) then 1000000 else 0\n"
     predict_function += "    let inputs = [scaledInput1, scaledInput2]\n"
+    
+    debug_all = []
 
-    for i, layer in enumerate(layers_info[:-1]):  # Iterate through layers except the output layer
-        debug_prefix = f'"Layer{i+1}"'
-        if i == 0:  # Directly use inputs for the first layer
-            predict_function += f"    let (layer{i+1}Output, debugLayer{i+1}) = forwardPassLayer{i+1}(inputs, layer{i+1}Weights, layer{i+1}Biases, {debug_prefix})\n"
-        else:  # Use output from the previous layer for subsequent layers
-            predict_function += f"    let (layer{i+1}Output, debugLayer{i+1}) = forwardPassLayer{i+1}(layer{i}Output, layer{i+1}Weights, layer{i+1}Biases, {debug_prefix})\n"
+    # Iterate through each layer and generate forward pass calls
+    for i, layer in enumerate(layers_info):
+        layer_num = i + 1
+        prev_output = "inputs" if i == 0 else f"layer{i}Output"
+        debug_prefix = f'"Layer{layer_num}"'
+        predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
+        debug_all.append(f"debugLayer{layer_num}")
 
-    # Adjusting for the output layer
-    last_layer_num = len(layers_info)
-    output_layer_weights = layers_info[-1]['weights']
-    if isinstance(output_layer_weights[0], list):  # Check if the weights are in a list of lists
-        output_layer_weights = flatten(output_layer_weights)  # Flatten the list of lists to a single list
+    # Reference the last layer's output directly
+    last_layer_output = f"layer{len(layers_info)}Output"
 
-    output_layer_biases = layers_info[-1]['biases']
-    if isinstance(output_layer_biases, list) and len(output_layer_biases) == 1:
-        output_layer_biases = output_layer_biases[0]  # Extract the single integer value
-
-    output_layer_index = f'"Layer{last_layer_num}"'
-    predict_function += f"    let (output, debugLayerLast) = forwardPassLayer{last_layer_num}(layer{last_layer_num-1}Output, {output_layer_weights}, {output_layer_biases}, {output_layer_index})\n"
-
-    # Construct the final output list including debug entries, correctly formatted
-    predict_function += "    [\n"
-    predict_function += "        IntegerEntry(\"result\", output)\n"
-    predict_function += "    ]\n"
-    predict_function += "}"
-
+    # Combining all debug information
+    debug_concat = " ++ ".join(debug_all)
+    predict_function += f"    [\n        IntegerEntry(\"result\", {last_layer_output})\n    ] ++ " + debug_concat + "\n}"
+    
     return predict_function
+
 
 def pytorch_to_waves_contract(model, scaling_factor=1000000):
     weight_bias_declarations = ""
