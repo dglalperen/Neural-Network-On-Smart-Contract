@@ -50,29 +50,40 @@ def generate_sigmoid_function():
     '''
 
 def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=False):
+    function_lines = []
+    sums = []
+    sigs = []
+    debug_entries = []
+
     if is_output_layer:
+        # Assuming a single output neuron for simplicity; adjust if your model differs
         input_weights = " + ".join([f"fraction(input[{i}], weights[0], 1000000)" for i in range(num_neurons)])
-        return f'''
-        func forwardPassLayer{layer_num}(input: List[Int], weights: List[Int], bias: Int, debugPrefix: String) = {{
-            let dotProduct = {input_weights}
-            let sum = dotProduct + bias
-            sigmoid(sum, debugPrefix)
-        }}
-        '''
+        sums.append(f"let sum = {input_weights} + biases")
+        sigs.append("let (debug, sig) = sigmoid(sum, debugPrefix)")
+        debug_entries.append("debug")
+        output = "sig"
     else:
-        sums = "\n    ".join([f"let sum{i} = " + " + ".join([f"fraction(input[{j}], weights[{i}][{j}], 1000000)" for j in range(num_neurons)]) + f" + biases[{i}]" for i in range(num_neurons)])
-        sigs = "\n    ".join([f"let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + \"L{i}N{j}\")" for i in range(num_neurons) for j in range(1)])
-        debug_entries = "++".join([f"debug{i}" for i in range(num_neurons)])
-        outputs = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]"
-        
-        return f'''
-        func forwardPassLayer{layer_num}(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {{
-            {sums}
-            {sigs}
-            ({outputs}, {debug_entries})
-        }}
-        '''
-        
+        for i in range(num_neurons):
+            sums.append(f"let sum{i} = " + " + ".join([f"fraction(input[{j}], weights[{i}][{j}], 1000000)" for j in range(num_neurons)]) + f" + biases[{i}]")
+            sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
+            debug_entries.append(f"debug{i}")
+        output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]"
+
+    # Combine all parts
+    function_lines.extend(sums)
+    function_lines.extend(sigs)
+    function_body = "\n    ".join(function_lines)
+    debug_info = " ++ ".join(debug_entries)
+
+    # Generate the complete function definition
+    function_definition = f'''
+    func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[Int]' if is_output_layer else 'List[List[Int]]'}, biases: {'Int' if is_output_layer else 'List[Int]'}, debugPrefix: String) = {{
+        {function_body}
+        ({output}, {debug_info})
+    }}
+    '''
+    return function_definition
+       
 def generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer):
     layer_functions = ""
     # Generate functions for hidden layers
@@ -110,7 +121,7 @@ def generate_predict_function(layers_info):
 
     # Construct the final output list including debug entries, correctly formatted
     predict_function += "    [\n"
-    predict_function += "        IntegerEntry(\"result\", output[0].value)\n"
+    predict_function += "        IntegerEntry(\"result\", output)\n"
     predict_function += "    ]\n"
     predict_function += "}"
 
