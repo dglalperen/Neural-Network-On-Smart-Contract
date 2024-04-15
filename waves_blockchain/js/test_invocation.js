@@ -1,108 +1,58 @@
 const { invokeScript, broadcast } = require("@waves/waves-transactions");
 const nodeUrl = "https://nodes-testnet.wavesnodes.com";
 
-// Define your dApp address and the account details
-const dAppAddress = "3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY";
-const dAppAddressIDE = "3NBwmKwBV3F4vBVoAUJfqVhV67oenSHaqRV";
+// Define your dApp address and the account seed
+const dAppAddress = "3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY"; // Ensure this is your smart contract address
 const seed =
   "aisle grit neutral neglect midnight blur energy lady mention gesture engage wheel foster juice domain";
 
-// Define the function call structure
-const call00 = {
-  function: "predict",
-  args: [
-    { type: "integer", value: 0 },
-    { type: "integer", value: 0 },
-  ],
-};
+// Function to create and broadcast a prediction call
+function predict(input1, input2) {
+  const callData = {
+    function: "predict",
+    args: [
+      { type: "integer", value: input1 },
+      { type: "integer", value: input2 },
+    ],
+  };
 
-const call00_original = {
-  function: "predict_original",
-  args: [
-    { type: "integer", value: 0 },
-    { type: "integer", value: 0 },
-  ],
-};
+  const signedTx = invokeScript(
+    {
+      dApp: dAppAddress,
+      call: callData,
+      chainId: "T",
+      fee: 500000,
+    },
+    seed
+  );
 
-const call01 = {
-  function: "predict",
-  args: [
-    { type: "integer", value: 0 },
-    { type: "integer", value: 1 },
-  ],
-};
+  return broadcast(signedTx, nodeUrl);
+}
 
-const call10 = {
-  function: "predict",
-  args: [
-    { type: "integer", value: 1 },
-    { type: "integer", value: 0 },
-  ],
-};
+// Example usage
+async function performPredictions() {
+  console.log("Prediction for [0, 0]");
+  try {
+    const response = await predict(0, 0);
+    console.log("Response:", response);
+  } catch (error) {
+    console.error("Error:", error);
+  }
 
-const call11 = {
-  function: "predict",
-  args: [
-    { type: "integer", value: 1 },
-    { type: "integer", value: 1 },
-  ],
-};
+  console.log("Prediction for [0, 1]");
+  await predict(0, 1)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
 
-// Create and sign the invoke script transaction
-const signedTx00 = invokeScript(
-  {
-    dApp: dAppAddress,
-    call: call00,
-    chainId: "T",
-    fee: 500000,
-  },
-  seed
-);
+  console.log("Prediction for [1, 0]");
+  await predict(1, 0)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
 
-const signedTx00_original = invokeScript(
-  {
-    dApp: dAppAddress,
-    call: call00_original,
-    chainId: "T",
-    fee: 500000,
-  },
-  seed
-);
+  console.log("Prediction for [1, 1]");
+  await predict(1, 1)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
+}
 
-const signedTx01 = invokeScript(
-  {
-    dApp: dAppAddress,
-    call: call01,
-    chainId: "T",
-    fee: 500000,
-  },
-  seed
-);
-
-const signedTx10 = invokeScript(
-  {
-    dApp: dAppAddress,
-    call: call10,
-    chainId: "T",
-    fee: 500000,
-  },
-  seed
-);
-
-const signedTx11 = invokeScript(
-  {
-    dApp: dAppAddress,
-    call: call11,
-    chainId: "T",
-    fee: 500000,
-  },
-  seed
-);
-
-broadcast(signedTx00, nodeUrl)
-  .then((response) => {
-    console.log("Response", response);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+performPredictions();

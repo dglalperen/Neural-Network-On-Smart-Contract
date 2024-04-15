@@ -1,3 +1,6 @@
+help me to work on my translater which translates pytorch trained model into ride smart contracts correctly
+
+heres my current python scripts which does not work quite correctly:
 import numpy as np
 import torch
 import random
@@ -218,3 +221,118 @@ if __name__ == "__main__":
     three_layer_xor_net.load_state_dict(three_layer_xor_net_state)
     contract = pytorch_to_waves_contract(three_layer_xor_net)
     save_contract_to_file(contract, "ThreeLayerXORNet.ride")
+
+
+for example this is a smart contract generated:
+
+    {-# STDLIB_VERSION 5 #-}
+    {-# CONTENT_TYPE DAPP #-}
+    {-# SCRIPT_TYPE ACCOUNT #-}
+    
+    let layer1Weights = [[600497, 600733], [414196, 414253]]
+    let layer1Biases = [-259051, -635637]
+    let layer2Weights = [[832966, -897142]]
+    let layer2Biases = [-381179]
+    
+    
+    
+func sigmoid(z: Int, debugPrefix: String) = {
+    let e = 2718281  # e scaled by 1,000,000
+    let base = 1000000
+    let positiveZ = if (z < 0) then -z else z
+    let expPart = fraction(e, base, positiveZ)
+    let sigValue = fraction(base, base + expPart, base)
+    (
+        [IntegerEntry(debugPrefix + "positiveZ", positiveZ), 
+         IntegerEntry(debugPrefix + "expPart", expPart),
+         IntegerEntry(debugPrefix + "sigValue", sigValue)],
+        sigValue
+    )
+}
+
+
+    func forwardPassLayer1(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
+    let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + biases[0]
+    let sum1 = fraction(input[0], weights[1][0], 1000000) + fraction(input[1], weights[1][1], 1000000) + biases[1]
+    let (debug0, sig0) = sigmoid(sum0, "Layer1N0")
+    let (debug1, sig1) = sigmoid(sum1, "Layer1N1")
+    ([sig0, sig1], debug0 ++ debug1)
+}func forwardPassLayer2(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
+    let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + biases[0]
+    let sum1 = fraction(input[0], weights[1][0], 1000000) + fraction(input[1], weights[1][1], 1000000) + biases[1]
+    let (debug0, sig0) = sigmoid(sum0, "Layer2N0")
+    let (debug1, sig1) = sigmoid(sum1, "Layer2N1")
+    ([sig0, sig1], debug0 ++ debug1)
+}
+
+    @Callable(i)
+func predict(input1: Int, input2: Int) = {
+    let scaledInput1 = if(input1 == 1) then 1000000 else 0
+    let scaledInput2 = if(input2 == 1) then 1000000 else 0
+    let inputs = [scaledInput1, scaledInput2]
+    let (layer1Output, debugLayer1) = forwardPassLayer1(inputs, layer1Weights, layer1Biases, "Layer1")
+    let (layer2Output, debugLayer2) = forwardPassLayer2(layer1Output, layer2Weights, layer2Biases, "Layer2")
+    [
+        IntegerEntry("result", layer2Output[0])
+    ] ++ debugLayer1 ++ debugLayer2
+}
+    
+
+if you check some aspects of it you notice that it tries to access a list index out of bounds in the forwardpasslayer2
+
+i think the main problem is that we are not quite paying attention to whether or not the forwardpass function is for the last layer or not
+
+this is how the generated script should look like:
+
+    {-# STDLIB_VERSION 5 #-}
+    {-# CONTENT_TYPE DAPP #-}
+    {-# SCRIPT_TYPE ACCOUNT #-}
+    
+    let layer1Weights = [[600496, 600732], [414196, 414252]]
+    let layer1Biases = [-259050, -635637]
+    let layer2Weights = [[832965, -897141]]
+    let layer2Biases = [-381178]
+    
+    
+    
+    func sigmoid(z: Int, debugPrefix: String) = {
+        let e = 2718281  # e scaled by 1,000,000
+        let base = 1000000
+        let positiveZ = if (z < 0) then -z else z
+        let expPart = fraction(e, base, positiveZ)
+        let sigValue = fraction(base, base, base + expPart)
+        (
+            [IntegerEntry(debugPrefix + "positiveZ", positiveZ), 
+             IntegerEntry(debugPrefix + "expPart", expPart),
+             IntegerEntry(debugPrefix + "sigValue", sigValue)],
+            sigValue
+        )
+    }
+    
+
+    func forwardPassLayer1(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
+    let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + biases[0]
+    let sum1 = fraction(input[0], weights[1][0], 1000000) + fraction(input[1], weights[1][1], 1000000) + biases[1]
+    let (debug0, sig0) = sigmoid(sum0, "Layer1N0")
+    let (debug1, sig1) = sigmoid(sum1, "Layer1N1")
+    ([sig0, sig1], debug0 ++ debug1)
+}func forwardPassLayer2(input: List[Int], weights: List[List[Int]], biases: List[Int], debugPrefix: String) = {
+    let sum0 = fraction(input[0], weights[0][0], 1000000) + fraction(input[1], weights[0][1], 1000000) + biases[0]
+    let (debug0, sig0) = sigmoid(sum0, "Layer2N0")
+    ([sig0], debug0)
+}
+
+    @Callable(i)
+func predict(input1: Int, input2: Int) = {
+    let scaledInput1 = if(input1 == 1) then 1000000 else 0
+    let scaledInput2 = if(input2 == 1) then 1000000 else 0
+    let inputs = [scaledInput1, scaledInput2]
+    let (layer1Output, debugLayer1) = forwardPassLayer1(inputs, layer1Weights, layer1Biases, "Layer1")
+    let (layer2Output, debugLayer2) = forwardPassLayer2(layer1Output, layer2Weights, layer2Biases, "Layer2")
+    [
+        IntegerEntry("result", layer2Output[0])
+    ] ++ debugLayer1 ++ debugLayer2
+}
+    
+
+adjust my python script correctly and return the fully adjusted file back
