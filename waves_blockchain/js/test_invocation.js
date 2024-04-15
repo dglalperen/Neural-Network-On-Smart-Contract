@@ -16,6 +16,14 @@ const call00 = {
   ],
 };
 
+const call00_original = {
+  function: "predict_original",
+  args: [
+    { type: "integer", value: 0 },
+    { type: "integer", value: 0 },
+  ],
+};
+
 const call01 = {
   function: "predict",
   args: [
@@ -45,6 +53,16 @@ const signedTx00 = invokeScript(
   {
     dApp: dAppAddress,
     call: call00,
+    chainId: "T",
+    fee: 500000,
+  },
+  seed
+);
+
+const signedTx00_original = invokeScript(
+  {
+    dApp: dAppAddress,
+    call: call00_original,
     chainId: "T",
     fee: 500000,
   },
@@ -81,7 +99,7 @@ const signedTx11 = invokeScript(
   seed
 );
 
-broadcast(signedTx01, nodeUrl)
+broadcast(signedTx00, nodeUrl)
   .then((response) => {
     console.log("Response", response);
   })

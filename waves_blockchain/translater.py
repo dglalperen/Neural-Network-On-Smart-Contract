@@ -50,35 +50,38 @@ def generate_sigmoid_function():
     '''
 
 def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=True):
-    # Initialize strings to hold function code
+    function_lines = []
     sums = []
     sigs = []
     debug_infos = []
 
-    # Generate sums and sigmoid applications with debugging for each neuron
+    bias_ref = "biases" if not is_output_layer else "biases"  # For output layer, 'biases' is directly used without indexing.
+
     for i in range(num_neurons):
+        # Adjusting input references based on whether it's an output layer.
         input_refs = [f"input[{j}]" for j in range(num_neurons)] if not is_output_layer else ["input[0]", "input[1]"]
-        weights_refs = [f"weights[{i}][{j}]" for j in range(num_neurons)] if not is_output_layer else [f"weights[0]", f"weights[1]"]
-        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)]) + f" + {f'biases[{i}]' if not is_output_layer else 'biases'}"
+        weights_refs = [f"weights[{i}][{j}]" for j in range(num_neurons)] if not is_output_layer else ["weights[0]", "weights[1]"]
+        
+        # Generating sum expressions with appropriate bias handling for output layer.
+        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)])
+        sum_exp += f" + {bias_ref}" if is_output_layer else f" + biases[{i}]"
         
         sums.append(f"let sum{i} = {sum_exp}")
         sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
         debug_infos.append(f"debug{i}")
 
-    # Combine all parts into a complete function definition
     function_body = "\n    ".join(sums + sigs)
     debug_concat = " ++ ".join(debug_infos)
     output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]" if not is_output_layer else "sig0"
 
-    # Final function definition
     function_definition = f'''
-func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[List[Int]]' if not is_output_layer else 'List[Int]'}, biases: {'List[Int]' if not is_output_layer else 'Int'}, debugPrefix: String) = {{
+func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[List[Int]]' if not is_output_layer else 'List[Int]'}, {bias_ref}: {'List[Int]' if not is_output_layer else 'Int'}, debugPrefix: String) = {{
     {function_body}
     ({output}, {debug_concat})
 }}
 '''
     return function_definition.strip()
-     
+   
 def generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer):
     layer_functions = ""
     # Generate functions for hidden layers
@@ -96,20 +99,23 @@ def generate_predict_function(layers_info):
     
     debug_all = []
 
-    # Iterate through each layer and generate forward pass calls
     for i, layer in enumerate(layers_info):
         layer_num = i + 1
         prev_output = "inputs" if i == 0 else f"layer{i}Output"
         debug_prefix = f'"Layer{layer_num}"'
-        predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
+
+        # Adjust for the last layer
+        if i == len(layers_info) - 1:  # This is the last layer, potentially the output layer
+            # Assuming the last layer may have a single set of weights and biases.
+            # Adjusting this logic based on the actual structure of your layers
+            predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights[0], layer{layer_num}Biases[0], {debug_prefix})\n"
+        else:
+            predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
+
         debug_all.append(f"debugLayer{layer_num}")
 
-    # Reference the last layer's output directly
-    last_layer_output = f"layer{len(layers_info)}Output"
-
-    # Combining all debug information
     debug_concat = " ++ ".join(debug_all)
-    predict_function += f"    [\n        IntegerEntry(\"result\", {last_layer_output})\n    ] ++ " + debug_concat + "\n}"
+    predict_function += f"    [\n        IntegerEntry(\"result\", layer{len(layers_info)}Output)\n    ] ++ " + debug_concat + "\n}"
     
     return predict_function
 
