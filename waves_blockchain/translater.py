@@ -1,39 +1,60 @@
 import numpy as np
 import torch
+import random
+import re
 from TwoLayerXOR.TwoLayerXORNet import TwoLayerXORNet
 from ThreeLayerXOR.ThreeLayerXORNet import ThreeLayerXORNet
-import re
+
 
 def save_contract_to_file(contract_content, file_name):
-    with open(f"./generated_smart_contracts/{file_name}", 'w') as file:
+    with open(f"./generated_smart_contracts/{file_name}", "w") as file:
         file.write(contract_content)
-        
+
+
 def extract_layer_index(name):
-    # This function attempts to extract the layer index from the parameter name using a regular expression.
-    match = re.search(r'layer(\d+)', name)
+    match = re.search(r"layer(\d+)", name)
     if match:
         return int(match.group(1))
     else:
         raise ValueError(f"Could not extract layer index from parameter name: {name}")
 
-def flatten(list_of_lists):
-    """Flatten a list of lists into a single list."""
-    return [item for sublist in list_of_lists for item in sublist]
 
-def format_parameters(param, scaling_factor, is_bias=False):
-    param = param.detach().numpy()  # Assuming param is a tensor
-    if is_bias:
-        # Biases are still formatted as a single list
-        scaled_param = (param * scaling_factor).astype(int)
-        formatted = ', '.join(str(x) for x in scaled_param.flatten())
+def stochastic_rounding(number):
+    floor_value = np.floor(number)
+    if random.random() < (number - floor_value):
+        return int(floor_value + 1)
     else:
-        # Weights need to be formatted as a list of lists
-        scaled_param = (param * scaling_factor).astype(int)
-        formatted = '[' + '], ['.join(', '.join(str(x) for x in row) for row in scaled_param) + ']'
-    return formatted
+        return int(floor_value)
+
+
+def quantize_parameters(param, scale_factor=100000, quantization_type="deterministic"):
+    if quantization_type == "stochastic":
+        vectorized_stochastic_rounding = np.vectorize(stochastic_rounding)
+        return vectorized_stochastic_rounding(param * scale_factor)
+    else:
+        return np.round(param * scale_factor).astype(int)
+
+
+def format_parameters(
+    param, scaling_factor=100000, quantization_type="deterministic", is_bias=False
+):
+    param = param.detach().numpy()
+    scaled_param = quantize_parameters(param, scaling_factor, quantization_type)
+    if is_bias:
+        return ", ".join(str(x) for x in scaled_param.flatten())
+    else:
+        if param.ndim == 1:
+            return ", ".join(str(x) for x in scaled_param)  # Single neuron in the layer
+        else:
+            return (
+                "["
+                + "], [".join(", ".join(str(x) for x in row) for row in scaled_param)
+                + "]"
+            )
+
 
 def generate_sigmoid_function():
-    return '''
+    return """
     func sigmoid(z: Int, debugPrefix: String) = {
         let e = 2718281  # e scaled by 1,000,000
         let base = 1000000
@@ -47,110 +68,141 @@ def generate_sigmoid_function():
             sigValue
         )
     }
-    '''
+    """
 
-def generate_forward_pass_function(layer_num, num_neurons, is_output_layer, include_debug=True):
+
+def generate_forward_pass_function(
+    layer_num, num_neurons, is_output_layer, include_debug=True
+):
     function_lines = []
     sums = []
     sigs = []
     debug_infos = []
 
-    bias_ref = "biases" if not is_output_layer else "biases"  # For output layer, 'biases' is directly used without indexing.
+    # Determine correct references for weights and biases
+    bias_ref = "biases"
+    weights_ref = "weights"
 
     for i in range(num_neurons):
-        # Adjusting input references based on whether it's an output layer.
-        input_refs = [f"input[{j}]" for j in range(num_neurons)] if not is_output_layer else ["input[0]", "input[1]"]
-        weights_refs = [f"weights[{i}][{j}]" for j in range(num_neurons)] if not is_output_layer else ["weights[0]", "weights[1]"]
-        
-        # Generating sum expressions with appropriate bias handling for output layer.
-        sum_exp = " + ".join([f"fraction({inp}, {wgt}, 1000000)" for inp, wgt in zip(input_refs, weights_refs)])
-        sum_exp += f" + {bias_ref}" if is_output_layer else f" + biases[{i}]"
-        
+        # Generate references to input values
+        input_refs = [f"input[{j}]" for j in range(num_neurons)]
+
+        # Generate references to weights (handle both single and multiple neuron layers)
+        if not is_output_layer:
+            weights_refs = [f"{weights_ref}[{i}][{j}]" for j in range(num_neurons)]
+        else:
+            if num_neurons == 1:  # Single output neuron
+                weights_refs = [f"{weights_ref}[{i}]"]
+            else:
+                weights_refs = [f"{weights_ref}[{i}][{j}]" for j in range(num_neurons)]
+
+        # Construct the sum expression
+        sum_exp = " + ".join(
+            [
+                f"fraction({inp}, {wgt}, 1000000)"
+                for inp, wgt in zip(input_refs, weights_refs)
+            ]
+        )
+        sum_exp += f" + {bias_ref}[{i}]"
+
         sums.append(f"let sum{i} = {sum_exp}")
-        sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, debugPrefix + "L{layer_num}N{i}")')
+        sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, "Layer{layer_num}N{i}")')
         debug_infos.append(f"debug{i}")
 
     function_body = "\n    ".join(sums + sigs)
     debug_concat = " ++ ".join(debug_infos)
-    output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]" if not is_output_layer else "sig0"
 
-    function_definition = f'''
-func forwardPassLayer{layer_num}(input: List[Int], weights: {'List[List[Int]]' if not is_output_layer else 'List[Int]'}, {bias_ref}: {'List[Int]' if not is_output_layer else 'Int'}, debugPrefix: String) = {{
+    # Output formatting based on neuron count
+    if num_neurons == 1:
+        output = "sig0"
+    else:
+        output = "[" + ", ".join([f"sig{i}" for i in range(num_neurons)]) + "]"
+
+    function_definition = f"""
+func forwardPassLayer{layer_num}(input: List[Int], {weights_ref}: {'List[Int]' if num_neurons == 1 and is_output_layer else 'List[List[Int]]'}, {bias_ref}: List[Int], debugPrefix: String) = {{
     {function_body}
     ({output}, {debug_concat})
 }}
-'''
+"""
     return function_definition.strip()
-   
+
+
 def generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer):
     layer_functions = ""
-    # Generate functions for hidden layers
     for i in range(1, num_hidden_layers + 1):
-        layer_functions += generate_forward_pass_function(i, neurons_per_hidden_layer[i-1], False)
-    # Generate function for the output layer, assuming output from the last hidden layer
-    layer_functions += generate_forward_pass_function(num_hidden_layers + 1, neurons_per_hidden_layer[-1], True)
+        layer_functions += generate_forward_pass_function(
+            i, neurons_per_hidden_layer[i - 1], False
+        )
+    layer_functions += generate_forward_pass_function(
+        num_hidden_layers + 1, neurons_per_hidden_layer[-1], True
+    )
     return layer_functions
+
 
 def generate_predict_function(layers_info):
     predict_function = "@Callable(i)\nfunc predict(input1: Int, input2: Int) = {\n"
     predict_function += "    let scaledInput1 = if(input1 == 1) then 1000000 else 0\n"
     predict_function += "    let scaledInput2 = if(input2 == 1) then 1000000 else 0\n"
     predict_function += "    let inputs = [scaledInput1, scaledInput2]\n"
-    
+
     debug_all = []
 
     for i, layer in enumerate(layers_info):
         layer_num = i + 1
         prev_output = "inputs" if i == 0 else f"layer{i}Output"
         debug_prefix = f'"Layer{layer_num}"'
-
-        # Adjust for the last layer
-        if i == len(layers_info) - 1:  # This is the last layer, potentially the output layer
-            # Assuming the last layer may have a single set of weights and biases.
-            # Adjusting this logic based on the actual structure of your layers
-            predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights[0], layer{layer_num}Biases[0], {debug_prefix})\n"
-        else:
-            predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
-
+        predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
         debug_all.append(f"debugLayer{layer_num}")
 
     debug_concat = " ++ ".join(debug_all)
-    predict_function += f"    [\n        IntegerEntry(\"result\", layer{len(layers_info)}Output)\n    ] ++ " + debug_concat + "\n}"
-    
+    predict_function += (
+        f'    [\n        IntegerEntry("result", layer{len(layers_info)}Output[0])\n    ] ++ '
+        + debug_concat
+        + "\n}"
+    )
+
     return predict_function
 
 
-def pytorch_to_waves_contract(model, scaling_factor=1000000):
+def pytorch_to_waves_contract(
+    model, scaling_factor=100000, quantization_type="stochastic"
+):
     weight_bias_declarations = ""
-    layers_info = []  # To store info about each layer
+    layers_info = []
 
     for name, param in model.items():
-        formatted_name = name.replace('.', '_')
-        if 'weight' in name:
+        formatted_name = name.replace(".", "_")
+        if "weight" in name:
             layer_idx = extract_layer_index(name) - 1
             while len(layers_info) <= layer_idx:
-                layers_info.append({'weights': None, 'biases': None, 'neurons': 0})
-            layers_info[layer_idx]['weights'] = format_parameters(param, scaling_factor, is_bias=False)
-            layers_info[layer_idx]['neurons'] = param.size(0)  # Number of output neurons in the layer
-        elif 'bias' in name:
+                layers_info.append({"weights": None, "biases": None, "neurons": 0})
+            layers_info[layer_idx]["weights"] = format_parameters(
+                param, scaling_factor, quantization_type, is_bias=False
+            )
+            layers_info[layer_idx]["neurons"] = param.size(
+                0
+            )  # Assuming output dimension is 0th dimension
+        elif "bias" in name:
             layer_idx = extract_layer_index(name) - 1
-            layers_info[layer_idx]['biases'] = format_parameters(param, scaling_factor, is_bias=True)
+            layers_info[layer_idx]["biases"] = format_parameters(
+                param, scaling_factor, quantization_type, is_bias=True
+            )
 
-    # Generating weight and bias declarations
     for i, layer in enumerate(layers_info):
-        weight_bias_declarations += f"let layer{i+1}Weights = [{layer['weights']}]\n    "
+        weight_bias_declarations += (
+            f"let layer{i+1}Weights = [{layer['weights']}]\n    "
+        )
         weight_bias_declarations += f"let layer{i+1}Biases = [{layer['biases']}]\n    "
 
-    num_hidden_layers = len(layers_info) - 1  # Assuming the last layer is output
-    neurons_per_hidden_layer = [layer['neurons'] for layer in layers_info[:-1]]  # Excluding output layer
+    num_hidden_layers = len(layers_info) - 1
+    neurons_per_hidden_layer = [layer["neurons"] for layer in layers_info[:-1]]
 
-    forward_pass_functions = generate_layer_functions(num_hidden_layers, neurons_per_hidden_layer)
-
+    forward_pass_functions = generate_layer_functions(
+        num_hidden_layers, neurons_per_hidden_layer
+    )
     predict_function = generate_predict_function(layers_info)
-    
     sigmoid_function = generate_sigmoid_function()
 
-    # Construct the contract template
     contract_template = f"""
     {{-# STDLIB_VERSION 5 #-}}
     {{-# CONTENT_TYPE DAPP #-}}
@@ -166,25 +218,19 @@ def pytorch_to_waves_contract(model, scaling_factor=1000000):
     """
     return contract_template
 
+
 if __name__ == "__main__":
-    # Load and convert models as an example
     xor_net = TwoLayerXORNet()
-    model_path = './TwoLayerXOR/two_layer_xor_net.pth'
-    xor_net_state = torch.load(model_path, map_location=torch.device('cpu'))
+    model_path = "./TwoLayerXOR/two_layer_xor_net.pth"
+    xor_net_state = torch.load(model_path, map_location=torch.device("cpu"))
     xor_net.load_state_dict(xor_net_state)
 
-    # Convert the XORNet to a Waves smart contract
     contract = pytorch_to_waves_contract(xor_net)
-    #print("2 Layer XOR Net Smart Contract:")
-    #print(contract)
-    save_contract_to_file(contract, 'TwoLayerXORNet.ride')
-    
-    # Three Layer XOR Net
+    save_contract_to_file(contract, "TwoLayerXORNet.ride")
+
     three_layer_xor_net = ThreeLayerXORNet()
-    model_path = './ThreeLayerXOR/three_layer_xor_net.pth'
-    three_layer_xor_net_state = torch.load(model_path, map_location=torch.device('cpu'))
+    model_path = "./ThreeLayerXOR/three_layer_xor_net.pth"
+    three_layer_xor_net_state = torch.load(model_path, map_location=torch_device("cpu"))
     three_layer_xor_net.load_state_dict(three_layer_xor_net_state)
     contract = pytorch_to_waves_contract(three_layer_xor_net)
-    # print("3 Layer XOR Net Smart Contract:")
-    # print(contract)
-    save_contract_to_file(contract, 'ThreeLayerXORNet.ride')
+    save_contract_to_file(contract, "ThreeLayerXORNet.ride")
