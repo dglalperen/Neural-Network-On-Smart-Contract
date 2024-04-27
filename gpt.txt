@@ -1,9 +1,18 @@
-import numpy as np
+help me to work on my translater which translates pytorch trained model into ride smart contracts correctly
+
+i have some points that i need you to tackle on
+let me first share you the code:
+
+    import numpy as np
 import torch
 import random
 import re
+import torch.nn as nn
+
+# Assuming TwoLayerXORNet and ThreeLayerXORNet are defined properly elsewhere
 from TwoLayerXOR.TwoLayerXORNet import TwoLayerXORNet
 from ThreeLayerXOR.ThreeLayerXORNet import ThreeLayerXORNet
+from TicTacToe.tictacnet import TicTacNet
 
 
 def save_contract_to_file(contract_content, file_name):
@@ -16,9 +25,38 @@ def extract_layer_index(name):
     if match:
         return int(match.group(1))
     else:
-        raise ValueError(
-            "Could not extract layer index from parameter name: {}".format(name)
-        )
+        return None  # Adapted to handle different naming conventions
+
+
+def extract_model_structure(model):
+    layers = []
+    for name, module in model.named_children():
+        if isinstance(module, nn.Linear):
+            activation_name = None
+            # Check next module for activation function
+            next_module = next(model.children())
+            if isinstance(next_module, (nn.Sigmoid, nn.ReLU, nn.Tanh)):
+                activation_name = get_activation_name(next_module)
+            layer_info = {
+                "name": name,
+                "type": "Linear",
+                "input_size": module.in_features,
+                "output_size": module.out_features,
+                "activation": activation_name,
+            }
+            layers.append(layer_info)
+    return layers
+
+
+def get_activation_name(module):
+    # Mapping PyTorch activations to custom function names in RIDE
+    activations = {
+        "Sigmoid": "sigmoid",
+        "ReLU": "relu",
+        "Tanh": "tanh",
+        "Softmax": "softmax",
+    }
+    return activations.get(module.__class__.__name__, None)
 
 
 def stochastic_rounding(number):
@@ -37,60 +75,102 @@ def quantize_parameters(param, scale_factor=100000, quantization_type="determini
     return np.round(param * scale_factor).astype(int)
 
 
-def format_parameters(
-    param, scale_factor=100000, quantization_type="deterministic", is_bias=False
-):
+def format_parameters(param, scale_factor=100000, quantization_type="deterministic"):
     param = param.detach().numpy()
-    quantized_param = quantize_parameters(param, scale_factor, quantization_type)
-    formatted = (
-        ", ".join(str(x) for x in quantized_param.flatten())
-        if is_bias
-        else "[{}]".format(
-            "], [".join(", ".join(str(x) for x in row) for row in quantized_param)
+    if quantization_type == "stochastic":
+        vectorized_rounding = np.vectorize(
+            lambda x: int(
+                np.floor(x) + 1 if np.random.rand() < (x - np.floor(x)) else np.floor(x)
+            )
         )
-    )
+        quantized_param = vectorized_rounding(param * scale_factor).astype(int)
+    else:
+        quantized_param = np.round(param * scale_factor).astype(int)
+
+    if len(param.shape) == 1:  # Bias
+        formatted = ", ".join(map(str, quantized_param))
+    else:  # Weights
+        formatted = "[{}]".format(
+            "], [".join(", ".join(map(str, row)) for row in quantized_param)
+        )
     return formatted
 
 
-def generate_sigmoid_function():
-    return """
+def generate_contract(layers):
+    declarations = []
+    functions = []
+    for layer in layers:
+        declarations.append(f"let {layer['name']}Weights = [{layer['weights']}]")
+        declarations.append(f"let {layer['name']}Biases = [{layer['biases']}]")
+        # Define function for layer forward pass
+        functions.append(
+            f"""
+func {layer['name']}Forward(input: List[Int], debugPrefix: String) = {{
+    let z = weightedSum(input, {layer['name']}Weights, {layer['name']}Biases)
+    let output = {layer['activation']}(z, debugPrefix)
+    output
+}}
+"""
+        )
+    return "\n".join(declarations + functions)
+
+
+def link_parameters_to_layers(layers, state_dict):
+    for layer in layers:
+        layer["weights"] = format_parameters(state_dict[f"{layer['name']}.weight"])
+        layer["biases"] = format_parameters(state_dict[f"{layer['name']}.bias"])
+
+
+def generate_activation_function(activation_type):
+    if activation_type == "sigmoid":
+        return """
 func sigmoid(z: Int, debugPrefix: String) = {
     let e = 2718281  # e scaled by 1,000,000
     let base = 1000000
     let positiveZ = if (z < 0) then -z else z
-    let scaledZ = positiveZ / 10000  # Scale down to avoid overflow
-    let expPart = fraction(e, base, scaledZ)
+    let expPart = fraction(e, base, positiveZ)
     let sigValue = fraction(base, base + expPart, base)
-    ([IntegerEntry(debugPrefix + "positiveZ", positiveZ),
-      IntegerEntry(debugPrefix + "expPart", expPart),
-      IntegerEntry(debugPrefix + "sigValue", sigValue)], sigValue)
+    ([IntegerEntry(debugPrefix + "positiveZ", positiveZ), IntegerEntry(debugPrefix + "expPart", expPart), IntegerEntry(debugPrefix + "sigValue", sigValue)], sigValue)
 }
 """
+    elif activation_type == "relu":
+        return """
+func relu(z: Int, debugPrefix: String) = {
+    let reluValue = if (z > 0) then z else 0
+    ([IntegerEntry(debugPrefix + "inputZ", z), IntegerEntry(debugPrefix + "reluValue", reluValue)], reluValue)
+}
+"""
+    else:
+        raise ValueError("Unsupported activation function: {}".format(activation_type))
 
 
 def generate_forward_pass_function(
-    layer_num, input_size, num_neurons, is_output_layer, include_debug=True
+    layer_num,
+    input_size,
+    num_neurons,
+    is_output_layer,
+    activation="sigmoid",
+    include_debug=True,
 ):
     function_lines = []
     sums = []
     sigs = []
     debug_infos = []
-
     bias_ref = "biases"
     weights_ref = "weights"
 
     for i in range(num_neurons):
         input_refs = [f"input[{j}]" for j in range(input_size)]
         weights_refs = [f"{weights_ref}[{i}][{j}]" for j in range(input_size)]
-
         sum_exp = " + ".join(
             f"fraction({inp}, {wgt}, 1000000)"
             for inp, wgt in zip(input_refs, weights_refs)
         )
         sum_exp += f" + {bias_ref}[{i}]"
-
         sums.append(f"let sum{i} = {sum_exp}")
-        sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, "Layer{layer_num}N{i}")')
+        sigs.append(
+            f'let (debug{i}, sig{i}) = {activation}(sum{i}, "Layer{layer_num}N{i}")'
+        )
         debug_infos.append(f"debug{i}")
 
     function_body = "\n    ".join(sums + sigs)
@@ -119,7 +199,11 @@ def generate_layer_functions(layers_info):
         is_output_layer = i == len(layers_info) - 1
         num_neurons = layer["neurons"]
         layer_functions += generate_forward_pass_function(
-            i + 1, input_size, num_neurons, is_output_layer
+            i + 1,
+            input_size,
+            num_neurons,
+            is_output_layer,
+            layer.get("activation", "sigmoid"),
         )
         input_size = num_neurons  # Update input size to current layer's neuron count for the next layer
     return layer_functions
@@ -152,7 +236,7 @@ def pytorch_to_waves_contract(
     weight_bias_declarations = ""
     layers_info = []
 
-    for name, param in model.items():
+    for name, param in model.named_parameters():
         formatted_name = name.replace(".", "_")
         if "weight" in name:
             layer_idx = extract_layer_index(name) - 1
@@ -168,15 +252,26 @@ def pytorch_to_waves_contract(
                 param, scaling_factor, quantization_type, is_bias=True
             )
 
+    activation_functions = set()
+    for layer in layers_info:
+        print(30 * "-")
+        print("Layer info")
+        print(layer)
+        print(30 * "-")
+        activation = layer.get("activation", "sigmoid")
+        activation_functions.add(activation)
+
     for i, layer in enumerate(layers_info):
         weight_bias_declarations += (
             f"let layer{i+1}Weights = [{layer['weights']}]\n    "
         )
         weight_bias_declarations += f"let layer{i+1}Biases = [{layer['biases']}]\n    "
 
+    activation_functions_code = "\n".join(
+        generate_activation_function(act) for act in activation_functions
+    )
     forward_pass_functions = generate_layer_functions(layers_info)
     predict_function = generate_predict_function(layers_info)
-    sigmoid_function = generate_sigmoid_function()
 
     contract_template = f"""
     {{-# STDLIB_VERSION 5 #-}}
@@ -185,7 +280,7 @@ def pytorch_to_waves_contract(
 
     {weight_bias_declarations}
 
-    {sigmoid_function}
+    {activation_functions_code}
 
     {forward_pass_functions}
 
@@ -196,7 +291,7 @@ def pytorch_to_waves_contract(
 
 if __name__ == "__main__":
     xor_net = TwoLayerXORNet()
-    model_path = "./TwoLayerXOR/two_layer_xor_net.pth"
+    model_path = "./drag_torch_model/two_layer_xor_net.pth"
     xor_net_state = torch.load(model_path, map_location=torch.device("cpu"))
     xor_net.load_state_dict(xor_net_state)
 
@@ -204,9 +299,20 @@ if __name__ == "__main__":
     save_contract_to_file(contract, "TwoLayerXORNet.ride")
 
     three_layer_xor_net = ThreeLayerXORNet()
-    model_path = "./ThreeLayerXOR/three_layer_xor_net.pth"
+    model_path = "./drag_torch_model/three_layer_xor_net.pth"
     three_layer_xor_net_state = torch.load(model_path, map_location=torch.device("cpu"))
     three_layer_xor_net.load_state_dict(three_layer_xor_net_state)
 
     contract = pytorch_to_waves_contract(three_layer_xor_net)
     save_contract_to_file(contract, "ThreeLayerXORNet.ride")
+
+    print("TicTacToeNet")
+    tic_tac_toe_net = TicTacNet()
+    model_path = "./drag_torch_model/tictactoe.pth"
+    tic_tac_toe_net_state = torch.load(model_path, map_location=torch.device("cpu"))
+    tic_tac_toe_net.load_state_dict(tic_tac_toe_net_state)
+
+    contract = pytorch_to_waves_contract(tic_tac_toe_net)
+    save_contract_to_file(contract, "TicTacToeNet.ride")
+
+
