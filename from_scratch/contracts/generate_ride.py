@@ -64,13 +64,10 @@ def generate_ride_script(json_file, debug_mode=True):
     # Add sigmoid activations for layers
     activation_funcs.append(
         f"# Sigmoid activation function for a list of values\n"
-        f"func sigmoid_activation(inputs: List[Int]) = {{\n"
+        f"func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {{\n"
         f"    ["
         + ", ".join(
-            [
-                f"sigmoid(inputs[{j}])"
-                for j in range(architecture[-1]["output_features"])
-            ]
+            [f"sigmoid(inputs[{j}])" for j in range(architecture[0]["output_features"])]
         )
         + "]\n"
         f"}}"
@@ -99,14 +96,14 @@ def generate_ride_script(json_file, debug_mode=True):
             predict_func_parts.extend(
                 [
                     f"    let z{i+1} = linear_forward_{i+1}(inputs, weights_layer_{i+1}, biases_layer_{i+1})",
-                    f"    let a{i+1} = sigmoid_activation(z{i+1})",
+                    f"    let a{i+1} = sigmoid_activation(z{i+1}, {architecture[i]['output_features']})",
                 ]
             )
         elif i < len(architecture) - 1:
             predict_func_parts.extend(
                 [
                     f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})",
-                    f"    let a{i+1} = sigmoid_activation(z{i+1})",
+                    f"    let a{i+1} = sigmoid_activation(z{i+1}, {architecture[i]['output_features']})",
                 ]
             )
         else:
@@ -125,12 +122,8 @@ def generate_ride_script(json_file, debug_mode=True):
     )
 
     if debug_mode:
-        predict_func_parts.extend(
-            [
-                "    # Debug outputs",
-                "    let debug_outputs = [",
-            ]
-        )
+        predict_func_parts.append("    # Debug outputs")
+        predict_func_parts.append("    let debug_outputs = [")
 
         debug_outputs_parts = []
         for i in range(len(architecture)):
@@ -150,16 +143,13 @@ def generate_ride_script(json_file, debug_mode=True):
 
         predict_func_parts.extend(debug_outputs_parts)
         predict_func_parts.extend(
-            ["    ]", "    (", "        debug_outputs,", "        result", "    )", "}"]
+            ["    ]", "    (", "        debug_outputs,", "        result", "    )"]
         )
     else:
-        predict_func_parts.extend(
-            [
-                "    let debug_outputs = []",  # Ensure an empty list for debug_outputs when not in debug mode
-                "    (debug_outputs, result)",
-                "}",
-            ]
-        )
+        predict_func_parts.append("    let debug_outputs = []")
+        predict_func_parts.append("    (debug_outputs, result)")
+
+    predict_func_parts.append("}")
 
     predict_func = "\n".join(predict_func_parts)
 

@@ -188,8 +188,8 @@ func sigmoid(input: Int) = {
     else 5000 + input / 2
 }
 # Sigmoid activation function for a list of values
-func sigmoid_activation(inputs: List[Int]) = {
-    [sigmoid(inputs[0]), sigmoid(inputs[1]), sigmoid(inputs[2]), sigmoid(inputs[3]), sigmoid(inputs[4]), sigmoid(inputs[5]), sigmoid(inputs[6]), sigmoid(inputs[7]), sigmoid(inputs[8])]
+func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {
+    [sigmoid(inputs[0]), sigmoid(inputs[1]), sigmoid(inputs[2]), sigmoid(inputs[3]), sigmoid(inputs[4]), sigmoid(inputs[5]), sigmoid(inputs[6]), sigmoid(inputs[7]), sigmoid(inputs[8]), sigmoid(inputs[9]), sigmoid(inputs[10]), sigmoid(inputs[11]), sigmoid(inputs[12]), sigmoid(inputs[13]), sigmoid(inputs[14]), sigmoid(inputs[15]), sigmoid(inputs[16]), sigmoid(inputs[17]), sigmoid(inputs[18]), sigmoid(inputs[19]), sigmoid(inputs[20]), sigmoid(inputs[21]), sigmoid(inputs[22]), sigmoid(inputs[23]), sigmoid(inputs[24]), sigmoid(inputs[25]), sigmoid(inputs[26]), sigmoid(inputs[27]), sigmoid(inputs[28]), sigmoid(inputs[29]), sigmoid(inputs[30]), sigmoid(inputs[31]), sigmoid(inputs[32]), sigmoid(inputs[33]), sigmoid(inputs[34]), sigmoid(inputs[35])]
 }
 
 # Predict Function
@@ -207,9 +207,9 @@ func predict(x1: Int, x2: Int, x3: Int, x4: Int, x5: Int, x6: Int, x7: Int, x8: 
     let x9_scaled = x9 * 10000
     let inputs = [x1_scaled, x2_scaled, x3_scaled, x4_scaled, x5_scaled, x6_scaled, x7_scaled, x8_scaled, x9_scaled]
     let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
-    let a1 = sigmoid_activation(z1)
+    let a1 = sigmoid_activation(z1, 36)
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
-    let a2 = sigmoid_activation(z2)
+    let a2 = sigmoid_activation(z2, 36)
     let z3 = linear_forward_3(a2, weights_layer_3, biases_layer_3)
     let a3 = sigmoid(z3[0])
     # Scaling back the output
