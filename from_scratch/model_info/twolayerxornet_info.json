@@ -1,0 +1,55 @@
+{
+    "architecture": [
+        {
+            "type": "Linear",
+            "input_features": 2,
+            "output_features": 2
+        },
+        {
+            "type": "Linear",
+            "input_features": 2,
+            "output_features": 1
+        }
+    ],
+    "parameters": {
+        "layers": [
+            {
+                "name": "layer1",
+                "num_neurons": 2,
+                "num_inputs": 2
+            },
+            {
+                "name": "layer2",
+                "num_neurons": 1,
+                "num_inputs": 2
+            }
+        ],
+        "weights": [
+            [
+                [
+                    6.004965305328369,
+                    6.007324695587158
+                ],
+                [
+                    4.141966819763184,
+                    4.142525672912598
+                ]
+            ],
+            [
+                [
+                    8.329656600952148,
+                    -8.971418380737305
+                ]
+            ]
+        ],
+        "biases": [
+            [
+                -2.590503692626953,
+                -6.3563714027404785
+            ],
+            [
+                -3.81178879737854
+            ]
+        ]
+    }
+}

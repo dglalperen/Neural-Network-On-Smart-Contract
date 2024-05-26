@@ -3,7 +3,7 @@ from TwoLayerXORNet import TwoLayerXORNet
 
 # Initialize the model and load trained weights
 model = TwoLayerXORNet()
-model_path = "./drag_torch_model/two_layer_xor_net.pth"  # Corrected path if necessary
+model_path = "../drag_torch_model/two_layer_xor_net.pth"  # Corrected path if necessary
 model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
 
 # Ensure the model is in evaluation mode
