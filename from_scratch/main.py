@@ -78,6 +78,7 @@ def save_generated_ride_script(script, output_folder="generated"):
 if __name__ == "__main__":
     # Example usage
     from models.two_layer_xor_net import TwoLayerXORNet
+    from models.three_layer_xor_net import ThreeLayerXORNet
     from models.tic_tac_toe_net import TicTacNet
 
     model_path_tictac = os.path.join(
@@ -88,13 +89,18 @@ if __name__ == "__main__":
         os.path.dirname(__file__), "trained_torch_models", "two_layer_xor_net.pth"
     )
 
-    extract_and_save_model_info(TwoLayerXORNet, model_path_twoxor)
+    model_path_threexor = os.path.join(
+        os.path.dirname(__file__), "trained_torch_models", "three_layer_xor_net.pth"
+    )
+
+    # extract_and_save_model_info(TwoLayerXORNet, model_path_twoxor)
+    extract_and_save_model_info(ThreeLayerXORNet, model_path_threexor)
     # tictac_model_info = extract_and_save_model_info(TicTacNet, model_path_tictac)
 
     # generate RIDE script
-    generated_script = generate_ride_script(
-        os.path.join("model_info", "twolayerxornet_info.json")
-    )
-    save_generated_ride_script(generated_script)
+    # generated_script = generate_ride_script(
+    #     os.path.join("model_info", "twolayerxornet_info.json")
+    # )
+    # save_generated_ride_script(generated_script)
     print("Ride script generated successfully!")
     # generate_ride_script(os.path.join("model_info", "tictacnet_info.json"))
