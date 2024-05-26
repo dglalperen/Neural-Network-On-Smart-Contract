@@ -2,7 +2,7 @@ const { invokeScript, broadcast } = require("@waves/waves-transactions");
 const nodeUrl = "https://nodes-testnet.wavesnodes.com";
 
 // Define your dApp address and the account seed
-const dAppAddress = "3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY"; // Ensure this is your smart contract address
+const dAppAddress = "3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY";
 const seed =
   "aisle grit neutral neglect midnight blur energy lady mention gesture engage wheel foster juice domain";
 

@@ -30,7 +30,9 @@ def stochastic_rounding(number):
     )
 
 
-def quantize_parameters(param, scale_factor=100000, quantization_type="deterministic"):
+def quantize_parameters(
+    param, scale_factor=1000, quantization_type="stochastic"
+):  # Reduced scale factor
     if quantization_type == "stochastic":
         vectorized_rounding = np.vectorize(stochastic_rounding)
         return vectorized_rounding(param * scale_factor).astype(int)
@@ -38,7 +40,7 @@ def quantize_parameters(param, scale_factor=100000, quantization_type="determini
 
 
 def format_parameters(
-    param, scale_factor=100000, quantization_type="deterministic", is_bias=False
+    param, scale_factor=1000, quantization_type="stochastic", is_bias=False
 ):
     param = param.detach().numpy()
     quantized_param = quantize_parameters(param, scale_factor, quantization_type)
@@ -54,18 +56,27 @@ def format_parameters(
 
 def generate_sigmoid_function():
     return """
-func sigmoid(z: Int, debugPrefix: String) = {
-    let e = 2718281  # e scaled by 1,000,000
-    let base = 1000000
-    let positiveZ = if (z < 0) then -z else z
-    let scaledZ = positiveZ / 10000  # Scale down to avoid overflow
-    let expPart = fraction(e, base, scaledZ)
-    let sigValue = fraction(base, base + expPart, base)
-    ([IntegerEntry(debugPrefix + "positiveZ", positiveZ),
-      IntegerEntry(debugPrefix + "expPart", expPart),
-      IntegerEntry(debugPrefix + "sigValue", sigValue)], sigValue)
-}
-"""
+    func expApprox(x: Int) = {
+        let scaledX = fraction(x, 1, 10)  # Reduced scaling for safety
+        let scaledX2 = fraction(scaledX, scaledX, 10)
+        let term1 = 10 - scaledX
+        let term2 = fraction(scaledX2, 5, 1)
+        term1 + term2
+    }
+    
+    func sigmoid(z: Int, debugPrefix: String) = {
+        let cappedZ = if (z > 200) then 200 else if (z < -200) then -200 else z  # Cap z to [-200, 200]
+        let expNegZ = expApprox(-cappedZ)
+        let onePlusExpNegZ = 10 + expNegZ
+        let sigValue = fraction(10, onePlusExpNegZ, 1)
+        
+        ([IntegerEntry(debugPrefix + "inputZ", cappedZ),
+          IntegerEntry(debugPrefix + "expNegZ", expNegZ),
+          IntegerEntry(debugPrefix + "onePlusExpNegZ", onePlusExpNegZ),
+          IntegerEntry(debugPrefix + "sigValue", sigValue)],
+         sigValue)
+    }
+    """
 
 
 def generate_forward_pass_function(
@@ -84,14 +95,15 @@ def generate_forward_pass_function(
         weights_refs = [f"{weights_ref}[{i}][{j}]" for j in range(input_size)]
 
         sum_exp = " + ".join(
-            f"fraction({inp}, {wgt}, 1000000)"
-            for inp, wgt in zip(input_refs, weights_refs)
+            f"{inp} * {wgt}" for inp, wgt in zip(input_refs, weights_refs)
         )
         sum_exp += f" + {bias_ref}[{i}]"
 
         sums.append(f"let sum{i} = {sum_exp}")
-        sigs.append(f'let (debug{i}, sig{i}) = sigmoid(sum{i}, "Layer{layer_num}N{i}")')
-        debug_infos.append(f"debug{i}")
+        sigs.append(
+            f'let (debugEntries{i}, sig{i}) = sigmoid(sum{i}, "Layer{layer_num}N{i}")'
+        )
+        debug_infos.append(f"debugEntries{i}")
 
     function_body = "\n    ".join(sums + sigs)
     debug_concat = " ++ ".join(debug_infos)
@@ -104,7 +116,9 @@ def generate_forward_pass_function(
     function_definition = f"""
 func forwardPassLayer{layer_num}(input: List[Int], {weights_ref}: List[List[Int]], {bias_ref}: List[Int], debugPrefix: String) = {{
     {function_body}
-    ({output}, {debug_concat})
+    let debugInfo = {debug_concat}
+    let output = {output}
+    (debugInfo, output)
 }}
 """
     return function_definition.strip()
@@ -127,15 +141,15 @@ def generate_layer_functions(layers_info):
 
 def generate_predict_function(layers_info):
     predict_function = "@Callable(i)\nfunc predict(input1: Int, input2: Int) = {\n"
-    predict_function += "    let scaledInput1 = if(input1 == 1) then 1000000 else 0\n"
-    predict_function += "    let scaledInput2 = if(input2 == 1) then 1000000 else 0\n"
+    predict_function += "    let scaledInput1 = if(input1 == 1) then 1 else 0\n"
+    predict_function += "    let scaledInput2 = if(input2 == 1) then 1 else 0\n"
     predict_function += "    let inputs = [scaledInput1, scaledInput2]\n"
     debug_all = []
     for i, layer in enumerate(layers_info):
         layer_num = i + 1
         prev_output = "inputs" if i == 0 else f"layer{i}Output"
         debug_prefix = f'"Layer{layer_num}"'
-        predict_function += f"    let (layer{layer_num}Output, debugLayer{layer_num}) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
+        predict_function += f"    let (debugLayer{layer_num}, layer{layer_num}Output) = forwardPassLayer{layer_num}({prev_output}, layer{layer_num}Weights, layer{layer_num}Biases, {debug_prefix})\n"
         debug_all.append(f"debugLayer{layer_num}")
     debug_concat = " ++ ".join(debug_all)
     predict_function += (
