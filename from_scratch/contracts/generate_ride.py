@@ -1,7 +1,7 @@
 import json
 
 
-def generate_ride_script(json_file):
+def generate_ride_script(json_file, debug_mode=True):
     with open(json_file, "r") as f:
         model = json.load(f)
 
@@ -11,21 +11,14 @@ def generate_ride_script(json_file):
     weights = parameters["weights"]
     biases = parameters["biases"]
 
-    print("Architecture:", architecture)
-    print("Weights:", weights)
-    print("Biases:", biases)
-
     layer_defs = []
     linear_funcs = []
     activation_funcs = []
 
-    for i, layer in enumerate(architecture):
-        input_features = layer["input_features"]
-        output_features = layer["output_features"]
-        weight_layer = weights[i]
-        bias_layer = biases[i]
-
-        # Define weights and biases
+    # Define weights and biases
+    for i, (layer, weight_layer, bias_layer) in enumerate(
+        zip(architecture, weights, biases)
+    ):
         weight_defs = f"let weights_layer_{i+1} = " + str(
             [[int(w * 10000) for w in ws] for ws in weight_layer]
         ).replace("], [", "],\n    [")
@@ -36,23 +29,29 @@ def generate_ride_script(json_file):
         layer_defs.append(weight_defs)
         layer_defs.append(bias_defs)
 
-    print("Layer definitions:", layer_defs)
-
     # General linear forward function
-    linear_func = (
-        f"# Linear forward function\n"
-        f"func linear_forward(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {{\n"
-        f"    let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1]) / 10000 + biases[0]\n"
-        f"    let weighted_sum2 = (input[0] * weights[1][0] + input[1] * weights[1][1]) / 10000 + biases[1]\n"
-        f"    [weighted_sum1, weighted_sum2]\n"
-        f"}}"
-    )
-    linear_funcs.append(linear_func)
+    def linear_func_def(i, input_size, output_size):
+        weighted_sums = [
+            f"let weighted_sum{j+1} = ("
+            + " + ".join([f"input[{k}] * weights[{j}][{k}]" for k in range(input_size)])
+            + f") / 10000 + biases[{j}]"
+            for j in range(output_size)
+        ]
+        return (
+            f"func linear_forward_{i}(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {{\n"
+            f"    " + "\n    ".join(weighted_sums) + "\n"
+            f"    ["
+            + ", ".join([f"weighted_sum{j+1}" for j in range(output_size)])
+            + "]\n"
+            f"}}"
+        )
 
-    print("Linear functions:", linear_funcs)
+    for i, layer in enumerate(architecture):
+        input_features = layer["input_features"]
+        output_features = layer["output_features"]
+        linear_funcs.append(linear_func_def(i + 1, input_features, output_features))
 
     # Sigmoid activation function for a list of values
-    # Sigmoid function definition
     activation_funcs.append(
         f"# Sigmoid function\n"
         f"func sigmoid(input: Int) = {{\n"
@@ -62,14 +61,20 @@ def generate_ride_script(json_file):
         f"}}"
     )
 
+    # Add sigmoid activations for layers
     activation_funcs.append(
         f"# Sigmoid activation function for a list of values\n"
         f"func sigmoid_activation(inputs: List[Int]) = {{\n"
-        f"    [sigmoid(inputs[0]), sigmoid(inputs[1])]\n"
+        f"    ["
+        + ", ".join(
+            [
+                f"sigmoid(inputs[{j}])"
+                for j in range(architecture[-1]["output_features"])
+            ]
+        )
+        + "]\n"
         f"}}"
     )
-
-    print("Activation functions:", activation_funcs)
 
     # Define the predict function
     input_scaling_parts = [
@@ -93,66 +98,70 @@ def generate_ride_script(json_file):
         if i == 0:
             predict_func_parts.extend(
                 [
-                    f"    let z{i+1} = linear_forward(inputs, weights_layer_{i+1}, biases_layer_{i+1})",
+                    f"    let z{i+1} = linear_forward_{i+1}(inputs, weights_layer_{i+1}, biases_layer_{i+1})",
+                    f"    let a{i+1} = sigmoid_activation(z{i+1})",
+                ]
+            )
+        elif i < len(architecture) - 1:
+            predict_func_parts.extend(
+                [
+                    f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})",
                     f"    let a{i+1} = sigmoid_activation(z{i+1})",
                 ]
             )
         else:
-            if architecture[i]["output_features"] > 1:
-                predict_func_parts.extend(
-                    [
-                        f"    let z{i+1} = linear_forward(a{i}, weights_layer_{i+1}, biases_layer_{i+1})",
-                        f"    let a{i+1} = sigmoid_activation(z{i+1})",
-                    ]
-                )
-            else:
-                predict_func_parts.extend(
-                    [
-                        f"    let z{i+1} = (a{i}[0] * weights_layer_{i+1}[0][0] + a{i}[1] * weights_layer_{i+1}[0][1]) / 10000 + biases_layer_{i+1}[0]",
-                        f"    let a{i+1} = sigmoid(z{i+1})",
-                    ]
-                )
-
-    print("Predict function parts before debug outputs:", predict_func_parts)
+            predict_func_parts.extend(
+                [
+                    f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})",
+                    f"    let a{i+1} = sigmoid(z{i+1}[0])",
+                ]
+            )
 
     predict_func_parts.extend(
         [
             "    # Scaling back the output",
             f"    let result = a{len(architecture)} / 10000",
-            "    # Debug outputs",
-            "    let debug_outputs = [",
         ]
     )
 
-    debug_outputs_parts = []
-    for i in range(len(architecture)):
-        if i < len(architecture) - 1:
+    if debug_mode:
+        predict_func_parts.extend(
+            [
+                "    # Debug outputs",
+                "    let debug_outputs = [",
+            ]
+        )
+
+        debug_outputs_parts = []
+        for i in range(len(architecture)):
             for j in range(architecture[i]["output_features"]):
                 debug_outputs_parts.append(
                     f'        IntegerEntry("debug_z{i+1}_{j+1}", z{i+1}[{j}]), '
                 )
-                debug_outputs_parts.append(
-                    f'        IntegerEntry("debug_a{i+1}_{j+1}", a{i+1}[{j}]), '
-                )
-        else:
-            for j in range(architecture[i]["output_features"]):
-                debug_outputs_parts.append(
-                    f'        IntegerEntry("debug_a{i+1}", a{i+1}), '
-                )
-            debug_outputs_parts.append(
-                f'        IntegerEntry("debug_z{i+1}", z{i+1}), '
-            )
+                if i < len(architecture) - 1:
+                    debug_outputs_parts.append(
+                        f'        IntegerEntry("debug_a{i+1}_{j+1}", a{i+1}[{j}]), '
+                    )
+                else:
+                    debug_outputs_parts.append(
+                        f'        IntegerEntry("debug_a{i+1}", a{i+1}), '
+                    )
+        debug_outputs_parts.append('        IntegerEntry("debug_result", result)')
 
-    debug_outputs_parts.append('        IntegerEntry("debug_result", result)')
-
-    predict_func_parts.extend(debug_outputs_parts)
-    predict_func_parts.extend(
-        ["    ]", "    (", "        debug_outputs,", "        result", "    )", "}"]
-    )
+        predict_func_parts.extend(debug_outputs_parts)
+        predict_func_parts.extend(
+            ["    ]", "    (", "        debug_outputs,", "        result", "    )", "}"]
+        )
+    else:
+        predict_func_parts.extend(
+            [
+                "    let debug_outputs = []",  # Ensure an empty list for debug_outputs when not in debug mode
+                "    (debug_outputs, result)",
+                "}",
+            ]
+        )
 
     predict_func = "\n".join(predict_func_parts)
-
-    print("Final predict function parts:", predict_func_parts)
 
     # Combine all parts
     ride_script = (
@@ -164,7 +173,5 @@ def generate_ride_script(json_file):
         "# Activation Functions\n" + "\n".join(activation_funcs) + "\n\n"
         "# Predict Function\n" + predict_func
     )
-
-    print("Generated RIDE script:\n", ride_script)
 
     return ride_script

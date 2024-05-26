@@ -55,12 +55,13 @@ def serialize_parameters(parameters):
     return serialized_params
 
 
-def save_generated_ride_script(script, output_folder="generated"):
+def save_generated_ride_script(script, model_name, output_folder="generated"):
     """
     Save the generated RIDE script to a file.
 
     Args:
         script (str): The generated RIDE script.
+        model_name (str): The name of the model to include in the file name.
         output_folder (str): The folder where the output file will be saved.
     """
     # Create the output folder if it does not exist
@@ -68,7 +69,7 @@ def save_generated_ride_script(script, output_folder="generated"):
         os.makedirs(output_folder)
 
     # Dynamically create the output file name based on the model name
-    output_file_name = "generated_ride_script.ride"
+    output_file_name = f"{model_name.lower()}_generated_ride_script.ride"
 
     # Save the RIDE script to a file
     with open(os.path.join("contracts", output_folder, output_file_name), "w") as f:
@@ -81,26 +82,31 @@ if __name__ == "__main__":
     from models.three_layer_xor_net import ThreeLayerXORNet
     from models.tic_tac_toe_net import TicTacNet
 
-    model_path_tictac = os.path.join(
-        os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
-    )
+    model_paths = {
+        "twolayerxornet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "two_layer_xor_net.pth"
+        ),
+        "threelayerxornet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "three_layer_xor_net.pth"
+        ),
+        "tictacnet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
+        ),
+    }
 
-    model_path_twoxor = os.path.join(
-        os.path.dirname(__file__), "trained_torch_models", "two_layer_xor_net.pth"
-    )
+    model_classes = {
+        "twolayerxornet": TwoLayerXORNet,
+        "threelayerxornet": ThreeLayerXORNet,
+        "tictacnet": TicTacNet,
+    }
 
-    model_path_threexor = os.path.join(
-        os.path.dirname(__file__), "trained_torch_models", "three_layer_xor_net.pth"
-    )
+    # Extract and save model info
+    for model_name, model_path in model_paths.items():
+        extract_and_save_model_info(model_classes[model_name], model_path)
 
-    # extract_and_save_model_info(TwoLayerXORNet, model_path_twoxor)
-    extract_and_save_model_info(ThreeLayerXORNet, model_path_threexor)
-    # tictac_model_info = extract_and_save_model_info(TicTacNet, model_path_tictac)
-
-    # generate RIDE script
-    # generated_script = generate_ride_script(
-    #     os.path.join("model_info", "twolayerxornet_info.json")
-    # )
-    # save_generated_ride_script(generated_script)
-    print("Ride script generated successfully!")
-    # generate_ride_script(os.path.join("model_info", "tictacnet_info.json"))
+    # Generate and save RIDE scripts
+    for model_name in model_paths.keys():
+        json_file_path = os.path.join("model_info", f"{model_name}_info.json")
+        generated_script = generate_ride_script(json_file_path, debug_mode=False)
+        save_generated_ride_script(generated_script, model_name)
+        print(f"RIDE script for {model_name} generated successfully!")

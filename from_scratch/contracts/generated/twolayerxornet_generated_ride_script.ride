@@ -1,0 +1,50 @@
+{-# STDLIB_VERSION 7 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+# Weights and Biases
+let weights_layer_1 = [[60049, 60073],
+    [41419, 41425]]
+let biases_layer_1 = [ -25905, -63563 ]
+let weights_layer_2 = [[83296, -89714]]
+let biases_layer_2 = [ -38117 ]
+
+# Linear Forward Functions
+func linear_forward_1(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
+    let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1]) / 10000 + biases[0]
+    let weighted_sum2 = (input[0] * weights[1][0] + input[1] * weights[1][1]) / 10000 + biases[1]
+    [weighted_sum1, weighted_sum2]
+}
+func linear_forward_2(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
+    let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1]) / 10000 + biases[0]
+    [weighted_sum1]
+}
+
+# Activation Functions
+# Sigmoid function
+func sigmoid(input: Int) = {
+    if (input < -10000) then 0
+    else if (input > 10000) then 10000
+    else 5000 + input / 2
+}
+# Sigmoid activation function for a list of values
+func sigmoid_activation(inputs: List[Int]) = {
+    [sigmoid(inputs[0])]
+}
+
+# Predict Function
+@Callable(i)
+func predict(x1: Int, x2: Int) = {
+    # Scale inputs
+    let x1_scaled = x1 * 10000
+    let x2_scaled = x2 * 10000
+    let inputs = [x1_scaled, x2_scaled]
+    let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
+    let a1 = sigmoid_activation(z1)
+    let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
+    let a2 = sigmoid(z2[0])
+    # Scaling back the output
+    let result = a2 / 10000
+    let debug_outputs = []
+    (debug_outputs, result)
+}
