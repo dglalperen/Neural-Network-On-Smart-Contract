@@ -56,9 +56,9 @@ func predict(x1: Int, x2: Int) = {
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = sigmoid_activation(z2, 2)
     let z3 = linear_forward_3(a2, weights_layer_3, biases_layer_3)
-    let a3 = sigmoid_activation(z3, 1)
+    let a3 = sigmoid(z3[0])
     # Scaling back the output
-    let results = [a3[0]]
+    let result = a3 / 10000
     let debug_outputs = []
-    (debug_outputs, results)
+    (debug_outputs, result)
 }

@@ -110,20 +110,15 @@ def generate_ride_script(json_file, debug_mode=True):
             predict_func_parts.extend(
                 [
                     f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})",
-                    f"    let a{i+1} = sigmoid_activation(z{i+1}, {architecture[i]['output_features']})",
+                    f"    let a{i+1} = sigmoid(z{i+1}[0])",
                 ]
             )
 
-    predict_func_parts.append(
-        "    # Scaling back the output\n"
-        "    let results = ["
-        + ", ".join(
-            [
-                f"a{len(architecture)}[{j}]"
-                for j in range(architecture[-1]["output_features"])
-            ]
-        )
-        + "]"
+    predict_func_parts.extend(
+        [
+            "    # Scaling back the output",
+            f"    let result = a{len(architecture)} / 10000",
+        ]
     )
 
     if debug_mode:
@@ -142,17 +137,17 @@ def generate_ride_script(json_file, debug_mode=True):
                     )
                 else:
                     debug_outputs_parts.append(
-                        f'        IntegerEntry("debug_a{i+1}_{j+1}", a{i+1}[{j}]), '
+                        f'        IntegerEntry("debug_a{i+1}", a{i+1}), '
                     )
-        debug_outputs_parts.append('        IntegerEntry("debug_results", results)')
+        debug_outputs_parts.append('        IntegerEntry("debug_result", result)')
 
         predict_func_parts.extend(debug_outputs_parts)
         predict_func_parts.extend(
-            ["    ]", "    (", "        debug_outputs,", "        results", "    )"]
+            ["    ]", "    (", "        debug_outputs,", "        result", "    )"]
         )
     else:
         predict_func_parts.append("    let debug_outputs = []")
-        predict_func_parts.append("    (debug_outputs, results)")
+        predict_func_parts.append("    (debug_outputs, result)")
 
     predict_func_parts.append("}")
 
