@@ -81,6 +81,7 @@ if __name__ == "__main__":
     from models.two_layer_xor_net import TwoLayerXORNet
     from models.three_layer_xor_net import ThreeLayerXORNet
     from models.tic_tac_toe_net import TicTacNet
+    from models.insurance_net import InsuranceNet
 
     model_paths = {
         "twolayerxornet": os.path.join(
@@ -92,12 +93,16 @@ if __name__ == "__main__":
         "tictacnet": os.path.join(
             os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
         ),
+        "insurancenet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
+        ),
     }
 
     model_classes = {
         "twolayerxornet": TwoLayerXORNet,
         "threelayerxornet": ThreeLayerXORNet,
         "tictacnet": TicTacNet,
+        "insurancenet": InsuranceNet,
     }
 
     # Extract and save model info
@@ -108,5 +113,5 @@ if __name__ == "__main__":
     for model_name in model_paths.keys():
         json_file_path = os.path.join("model_info", f"{model_name}_info.json")
         generated_script = generate_ride_script(json_file_path, debug_mode=False)
-        # save_generated_ride_script(generated_script, model_name)
+        save_generated_ride_script(generated_script, model_name)
         print(f"RIDE script for {model_name} generated successfully!")
