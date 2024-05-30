@@ -34,6 +34,12 @@ async function performMoves() {
     [1, -1, 0, 0, 0, 0, 0, 0, 0], // AI move
     [1, -1, 0, 1, 0, 0, 0, 0, 0], // Player O move
     [1, -1, -1, 1, 0, 0, 0, 0, 0], // AI move
+    [-1, -1, 0, 1, 0, 0, 0, 0, 0], // Player O move (Player is about to win)
+    [-1, 0, 0, 1, 0, 0, 0, 0, -1], // AI move (AI blocks player)
+    [-1, -1, 1, 0, 0, 0, 0, 0, 0], // Player O move (Player is about to win)
+    [-1, -1, 1, 0, 1, 0, 0, 0, 0], // AI move (AI blocks player)
+    [-1, -1, 1, 0, -1, 0, 1, 0, 0], // Player O move (Player is about to win)
+    [-1, -1, 1, 0, -1, -1, 1, 0, 1], // AI move (AI blocks player)
   ];
 
   for (let i = 0; i < boards.length; i++) {

@@ -1,0 +1,52 @@
+Board State: (-1, -1, 1, 0, -1, -1, 1, 0, 1)
+
+Model Predictions:
+move_prediction_0: 0
+move_prediction_1: 0
+move_prediction_2: 0
+move_prediction_3: 0
+move_prediction_4: 0
+move_prediction_5: 0
+move_prediction_6: 0
+move_prediction_7: 1
+move_prediction_8: 0
+Evaluation: The model suggests placing the next move at index 7, which could potentially lead to a winning position for the AI.
+Board State: (-1, -1, 1, 0, -1, 0, 1, 0, 0)
+
+Model Predictions:
+move_prediction_0: 0
+move_prediction_1: 0
+move_prediction_2: 0
+move_prediction_3: 0
+move_prediction_4: 0
+move_prediction_5: 1
+move_prediction_6: 0
+move_prediction_7: 1
+move_prediction_8: 1
+Evaluation: The model suggests placing the next move either at index 5, 7, or 8, all of which seem reasonable options to maintain or improve the AI's position.
+Board State: (-1, -1, 1, 0, 1, 0, 0, 0, 0)
+
+Model Predictions:
+move_prediction_0: 0
+move_prediction_1: 0
+move_prediction_2: 0
+move_prediction_3: 0
+move_prediction_4: 0
+move_prediction_5: 0
+move_prediction_6: 1
+move_prediction_7: 0
+move_prediction_8: 0
+Evaluation: The model suggests placing the next move at index 6, which seems like a defensive move to block the opponent from winning.
+Board State: (-1, -1, 1, 0, 0, 0, 0, 0, 0)
+
+Model Predictions:
+move_prediction_0: 0
+move_prediction_1: 0
+move_prediction_2: 0
+move_prediction_3: 0
+move_prediction_4: 0
+move_prediction_5: 1
+move_prediction_6: 1
+move_prediction_7: 0
+move_prediction_8: 0
+Evaluation: The model suggests placing the next move either at index 5 or 6, which could be defensive or strategic moves to prevent the opponent from winning.

@@ -223,9 +223,27 @@ func predict(x1: Int, x2: Int, x3: Int, x4: Int, x5: Int, x6: Int, x7: Int, x8: 
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = relu_activation(z2, 36)
     let z3 = linear_forward_3(a2, weights_layer_3, biases_layer_3)
-    let a3 = sigmoid(z3[0])
+    let a3 = sigmoid_activation(z3, 9)
     # Scaling back the output
-    let result = a3 / 10000
+    let result0 = a3[0] / 10000
+    let result1 = a3[1] / 10000
+    let result2 = a3[2] / 10000
+    let result3 = a3[3] / 10000
+    let result4 = a3[4] / 10000
+    let result5 = a3[5] / 10000
+    let result6 = a3[6] / 10000
+    let result7 = a3[7] / 10000
+    let result8 = a3[8] / 10000
     let debug_outputs = []
-    (debug_outputs, result)
+    [
+        IntegerEntry("move_prediction_0", result0),
+        IntegerEntry("move_prediction_1", result1),
+        IntegerEntry("move_prediction_2", result2),
+        IntegerEntry("move_prediction_3", result3),
+        IntegerEntry("move_prediction_4", result4),
+        IntegerEntry("move_prediction_5", result5),
+        IntegerEntry("move_prediction_6", result6),
+        IntegerEntry("move_prediction_7", result7),
+        IntegerEntry("move_prediction_8", result8)
+    ] ++ debug_outputs
 }

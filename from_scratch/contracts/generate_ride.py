@@ -143,45 +143,50 @@ def generate_predict_function(architecture, debug_mode=True):
             )
             if architecture[i]["activation"]:
                 predict_func_parts.append(
-                    f"    let a{i+1} = {architecture[i]['activation']}(z{i+1}[0])"
+                    f"    let a{i+1} = {architecture[i]['activation']}_activation(z{i+1}, {architecture[i]['output_features']})"
                 )
             else:
-                predict_func_parts.append(f"    let a{i+1} = z{i+1}[0]")
+                predict_func_parts.append(f"    let a{i+1} = z{i+1}")
 
-    predict_func_parts.extend(
-        [
-            "    # Scaling back the output",
-            f"    let result = a{len(architecture)} / 10000",
-        ]
-    )
+    # Scaling back the output
+    output_scaling = [
+        f"let result{j} = a{len(architecture)}[{j}] / 10000"
+        for j in range(architecture[-1]["output_features"])
+    ]
+    output_scaling_str = "\n    ".join(output_scaling)
+
+    predict_func_parts.append("    # Scaling back the output")
+    predict_func_parts.append(f"    {output_scaling_str}")
 
     if debug_mode:
         predict_func_parts.append("    # Debug outputs")
-        predict_func_parts.append("    let debug_outputs = [")
+        predict_func_parts.append("    let debug_outputs = []")
 
-        debug_outputs_parts = []
-        for i in range(len(architecture)):
-            for j in range(architecture[i]["output_features"]):
-                debug_outputs_parts.append(
-                    f'        IntegerEntry("debug_z{i+1}_{j+1}", z{i+1}[{j}]), '
+        predict_func_parts.append("    [")
+        for j in range(architecture[-1]["output_features"]):
+            if j == architecture[-1]["output_features"] - 1:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j})'
                 )
-                if i < len(architecture) - 1 or architecture[i]["activation"]:
-                    debug_outputs_parts.append(
-                        f'        IntegerEntry("debug_a{i+1}_{j+1}", a{i+1}[{j}]), '
-                    )
-                else:
-                    debug_outputs_parts.append(
-                        f'        IntegerEntry("debug_a{i+1}", a{i+1}), '
-                    )
-        debug_outputs_parts.append('        IntegerEntry("debug_result", result)')
+            else:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j}),'
+                )
+        predict_func_parts.append("    ] ++ debug_outputs")
 
-        predict_func_parts.extend(debug_outputs_parts)
-        predict_func_parts.extend(
-            ["    ]", "    (", "        debug_outputs,", "        result", "    )"]
-        )
     else:
         predict_func_parts.append("    let debug_outputs = []")
-        predict_func_parts.append("    (debug_outputs, result)")
+        predict_func_parts.append("    [")
+        for j in range(architecture[-1]["output_features"]):
+            if j == architecture[-1]["output_features"] - 1:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j})'
+                )
+            else:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j}),'
+                )
+        predict_func_parts.append("    ] ++ debug_outputs")
 
     predict_func_parts.append("}")
 
