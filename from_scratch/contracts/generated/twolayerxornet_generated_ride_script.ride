@@ -45,6 +45,18 @@ func predict(x1: Int, x2: Int) = {
     let a2 = sigmoid(z2[0])
     # Scaling back the output
     let result = a2 / 10000
-    let debug_outputs = []
-    (debug_outputs, result)
+    # Debug outputs
+    let debug_outputs = [
+        IntegerEntry("debug_z1_1", z1[0]), 
+        IntegerEntry("debug_a1_1", a1[0]), 
+        IntegerEntry("debug_z1_2", z1[1]), 
+        IntegerEntry("debug_a1_2", a1[1]), 
+        IntegerEntry("debug_z2_1", z2[0]), 
+        IntegerEntry("debug_a2", a2), 
+        IntegerEntry("debug_result", result)
+    ]
+    (
+        debug_outputs,
+        result
+    )
 }

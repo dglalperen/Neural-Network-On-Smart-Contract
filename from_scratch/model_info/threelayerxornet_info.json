@@ -3,17 +3,20 @@
         {
             "type": "Linear",
             "input_features": 2,
-            "output_features": 4
+            "output_features": 4,
+            "activation": "sigmoid"
         },
         {
             "type": "Linear",
             "input_features": 4,
-            "output_features": 2
+            "output_features": 2,
+            "activation": "sigmoid"
         },
         {
             "type": "Linear",
             "input_features": 2,
-            "output_features": 1
+            "output_features": 1,
+            "activation": "sigmoid"
         }
     ],
     "parameters": {

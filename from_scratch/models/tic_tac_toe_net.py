@@ -8,6 +8,11 @@ class TicTacNet(nn.Module):
         self.dl1 = nn.Linear(9, 36)
         self.dl2 = nn.Linear(36, 36)
         self.output_layer = nn.Linear(36, 9)
+        self.activations = [
+            ("dl1", "relu"),
+            ("dl2", "relu"),
+            ("output_layer", "sigmoid"),
+        ]
 
     def forward(self, x):
         x = self.dl1(x)

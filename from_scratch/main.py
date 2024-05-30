@@ -108,5 +108,5 @@ if __name__ == "__main__":
     for model_name in model_paths.keys():
         json_file_path = os.path.join("model_info", f"{model_name}_info.json")
         generated_script = generate_ride_script(json_file_path, debug_mode=False)
-        save_generated_ride_script(generated_script, model_name)
+        # save_generated_ride_script(generated_script, model_name)
         print(f"RIDE script for {model_name} generated successfully!")

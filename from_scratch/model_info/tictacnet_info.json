@@ -3,17 +3,20 @@
         {
             "type": "Linear",
             "input_features": 9,
-            "output_features": 36
+            "output_features": 36,
+            "activation": "relu"
         },
         {
             "type": "Linear",
             "input_features": 36,
-            "output_features": 36
+            "output_features": 36,
+            "activation": "relu"
         },
         {
             "type": "Linear",
             "input_features": 36,
-            "output_features": 9
+            "output_features": 9,
+            "activation": "sigmoid"
         }
     ],
     "parameters": {
