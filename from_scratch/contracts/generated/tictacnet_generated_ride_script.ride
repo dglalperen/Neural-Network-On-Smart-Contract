@@ -128,6 +128,7 @@ func linear_forward_1(input: List[Int], weights: List[List[Int]], biases: List[I
     let weighted_sum36 = (input[0] * weights[35][0] + input[1] * weights[35][1] + input[2] * weights[35][2] + input[3] * weights[35][3] + input[4] * weights[35][4] + input[5] * weights[35][5] + input[6] * weights[35][6] + input[7] * weights[35][7] + input[8] * weights[35][8]) / 10000 + biases[35]
     [weighted_sum1, weighted_sum2, weighted_sum3, weighted_sum4, weighted_sum5, weighted_sum6, weighted_sum7, weighted_sum8, weighted_sum9, weighted_sum10, weighted_sum11, weighted_sum12, weighted_sum13, weighted_sum14, weighted_sum15, weighted_sum16, weighted_sum17, weighted_sum18, weighted_sum19, weighted_sum20, weighted_sum21, weighted_sum22, weighted_sum23, weighted_sum24, weighted_sum25, weighted_sum26, weighted_sum27, weighted_sum28, weighted_sum29, weighted_sum30, weighted_sum31, weighted_sum32, weighted_sum33, weighted_sum34, weighted_sum35, weighted_sum36]
 }
+
 func linear_forward_2(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
     let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1] + input[2] * weights[0][2] + input[3] * weights[0][3] + input[4] * weights[0][4] + input[5] * weights[0][5] + input[6] * weights[0][6] + input[7] * weights[0][7] + input[8] * weights[0][8] + input[9] * weights[0][9] + input[10] * weights[0][10] + input[11] * weights[0][11] + input[12] * weights[0][12] + input[13] * weights[0][13] + input[14] * weights[0][14] + input[15] * weights[0][15] + input[16] * weights[0][16] + input[17] * weights[0][17] + input[18] * weights[0][18] + input[19] * weights[0][19] + input[20] * weights[0][20] + input[21] * weights[0][21] + input[22] * weights[0][22] + input[23] * weights[0][23] + input[24] * weights[0][24] + input[25] * weights[0][25] + input[26] * weights[0][26] + input[27] * weights[0][27] + input[28] * weights[0][28] + input[29] * weights[0][29] + input[30] * weights[0][30] + input[31] * weights[0][31] + input[32] * weights[0][32] + input[33] * weights[0][33] + input[34] * weights[0][34] + input[35] * weights[0][35]) / 10000 + biases[0]
     let weighted_sum2 = (input[0] * weights[1][0] + input[1] * weights[1][1] + input[2] * weights[1][2] + input[3] * weights[1][3] + input[4] * weights[1][4] + input[5] * weights[1][5] + input[6] * weights[1][6] + input[7] * weights[1][7] + input[8] * weights[1][8] + input[9] * weights[1][9] + input[10] * weights[1][10] + input[11] * weights[1][11] + input[12] * weights[1][12] + input[13] * weights[1][13] + input[14] * weights[1][14] + input[15] * weights[1][15] + input[16] * weights[1][16] + input[17] * weights[1][17] + input[18] * weights[1][18] + input[19] * weights[1][19] + input[20] * weights[1][20] + input[21] * weights[1][21] + input[22] * weights[1][22] + input[23] * weights[1][23] + input[24] * weights[1][24] + input[25] * weights[1][25] + input[26] * weights[1][26] + input[27] * weights[1][27] + input[28] * weights[1][28] + input[29] * weights[1][29] + input[30] * weights[1][30] + input[31] * weights[1][31] + input[32] * weights[1][32] + input[33] * weights[1][33] + input[34] * weights[1][34] + input[35] * weights[1][35]) / 10000 + biases[1]
@@ -167,6 +168,7 @@ func linear_forward_2(input: List[Int], weights: List[List[Int]], biases: List[I
     let weighted_sum36 = (input[0] * weights[35][0] + input[1] * weights[35][1] + input[2] * weights[35][2] + input[3] * weights[35][3] + input[4] * weights[35][4] + input[5] * weights[35][5] + input[6] * weights[35][6] + input[7] * weights[35][7] + input[8] * weights[35][8] + input[9] * weights[35][9] + input[10] * weights[35][10] + input[11] * weights[35][11] + input[12] * weights[35][12] + input[13] * weights[35][13] + input[14] * weights[35][14] + input[15] * weights[35][15] + input[16] * weights[35][16] + input[17] * weights[35][17] + input[18] * weights[35][18] + input[19] * weights[35][19] + input[20] * weights[35][20] + input[21] * weights[35][21] + input[22] * weights[35][22] + input[23] * weights[35][23] + input[24] * weights[35][24] + input[25] * weights[35][25] + input[26] * weights[35][26] + input[27] * weights[35][27] + input[28] * weights[35][28] + input[29] * weights[35][29] + input[30] * weights[35][30] + input[31] * weights[35][31] + input[32] * weights[35][32] + input[33] * weights[35][33] + input[34] * weights[35][34] + input[35] * weights[35][35]) / 10000 + biases[35]
     [weighted_sum1, weighted_sum2, weighted_sum3, weighted_sum4, weighted_sum5, weighted_sum6, weighted_sum7, weighted_sum8, weighted_sum9, weighted_sum10, weighted_sum11, weighted_sum12, weighted_sum13, weighted_sum14, weighted_sum15, weighted_sum16, weighted_sum17, weighted_sum18, weighted_sum19, weighted_sum20, weighted_sum21, weighted_sum22, weighted_sum23, weighted_sum24, weighted_sum25, weighted_sum26, weighted_sum27, weighted_sum28, weighted_sum29, weighted_sum30, weighted_sum31, weighted_sum32, weighted_sum33, weighted_sum34, weighted_sum35, weighted_sum36]
 }
+
 func linear_forward_3(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
     let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1] + input[2] * weights[0][2] + input[3] * weights[0][3] + input[4] * weights[0][4] + input[5] * weights[0][5] + input[6] * weights[0][6] + input[7] * weights[0][7] + input[8] * weights[0][8] + input[9] * weights[0][9] + input[10] * weights[0][10] + input[11] * weights[0][11] + input[12] * weights[0][12] + input[13] * weights[0][13] + input[14] * weights[0][14] + input[15] * weights[0][15] + input[16] * weights[0][16] + input[17] * weights[0][17] + input[18] * weights[0][18] + input[19] * weights[0][19] + input[20] * weights[0][20] + input[21] * weights[0][21] + input[22] * weights[0][22] + input[23] * weights[0][23] + input[24] * weights[0][24] + input[25] * weights[0][25] + input[26] * weights[0][26] + input[27] * weights[0][27] + input[28] * weights[0][28] + input[29] * weights[0][29] + input[30] * weights[0][30] + input[31] * weights[0][31] + input[32] * weights[0][32] + input[33] * weights[0][33] + input[34] * weights[0][34] + input[35] * weights[0][35]) / 10000 + biases[0]
     let weighted_sum2 = (input[0] * weights[1][0] + input[1] * weights[1][1] + input[2] * weights[1][2] + input[3] * weights[1][3] + input[4] * weights[1][4] + input[5] * weights[1][5] + input[6] * weights[1][6] + input[7] * weights[1][7] + input[8] * weights[1][8] + input[9] * weights[1][9] + input[10] * weights[1][10] + input[11] * weights[1][11] + input[12] * weights[1][12] + input[13] * weights[1][13] + input[14] * weights[1][14] + input[15] * weights[1][15] + input[16] * weights[1][16] + input[17] * weights[1][17] + input[18] * weights[1][18] + input[19] * weights[1][19] + input[20] * weights[1][20] + input[21] * weights[1][21] + input[22] * weights[1][22] + input[23] * weights[1][23] + input[24] * weights[1][24] + input[25] * weights[1][25] + input[26] * weights[1][26] + input[27] * weights[1][27] + input[28] * weights[1][28] + input[29] * weights[1][29] + input[30] * weights[1][30] + input[31] * weights[1][31] + input[32] * weights[1][32] + input[33] * weights[1][33] + input[34] * weights[1][34] + input[35] * weights[1][35]) / 10000 + biases[1]
@@ -181,6 +183,16 @@ func linear_forward_3(input: List[Int], weights: List[List[Int]], biases: List[I
 }
 
 # Activation Functions
+# ReLU function
+func relu(input: Int) = {
+    if (input < 0) then 0
+    else input
+}
+# ReLU activation function for a list of values
+func relu_activation(inputs: List[Int], num_outputs: Int) = {
+    [relu(inputs[0]), relu(inputs[1]), relu(inputs[2]), relu(inputs[3]), relu(inputs[4]), relu(inputs[5]), relu(inputs[6]), relu(inputs[7]), relu(inputs[8]), relu(inputs[9]), relu(inputs[10]), relu(inputs[11]), relu(inputs[12]), relu(inputs[13]), relu(inputs[14]), relu(inputs[15]), relu(inputs[16]), relu(inputs[17]), relu(inputs[18]), relu(inputs[19]), relu(inputs[20]), relu(inputs[21]), relu(inputs[22]), relu(inputs[23]), relu(inputs[24]), relu(inputs[25]), relu(inputs[26]), relu(inputs[27]), relu(inputs[28]), relu(inputs[29]), relu(inputs[30]), relu(inputs[31]), relu(inputs[32]), relu(inputs[33]), relu(inputs[34]), relu(inputs[35])]
+}
+
 # Sigmoid function
 func sigmoid(input: Int) = {
     if (input < -10000) then 0
@@ -189,7 +201,7 @@ func sigmoid(input: Int) = {
 }
 # Sigmoid activation function for a list of values
 func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {
-    [sigmoid(inputs[0]), sigmoid(inputs[1]), sigmoid(inputs[2]), sigmoid(inputs[3]), sigmoid(inputs[4]), sigmoid(inputs[5]), sigmoid(inputs[6]), sigmoid(inputs[7]), sigmoid(inputs[8]), sigmoid(inputs[9]), sigmoid(inputs[10]), sigmoid(inputs[11]), sigmoid(inputs[12]), sigmoid(inputs[13]), sigmoid(inputs[14]), sigmoid(inputs[15]), sigmoid(inputs[16]), sigmoid(inputs[17]), sigmoid(inputs[18]), sigmoid(inputs[19]), sigmoid(inputs[20]), sigmoid(inputs[21]), sigmoid(inputs[22]), sigmoid(inputs[23]), sigmoid(inputs[24]), sigmoid(inputs[25]), sigmoid(inputs[26]), sigmoid(inputs[27]), sigmoid(inputs[28]), sigmoid(inputs[29]), sigmoid(inputs[30]), sigmoid(inputs[31]), sigmoid(inputs[32]), sigmoid(inputs[33]), sigmoid(inputs[34]), sigmoid(inputs[35])]
+    [sigmoid(inputs[0]), sigmoid(inputs[1]), sigmoid(inputs[2]), sigmoid(inputs[3]), sigmoid(inputs[4]), sigmoid(inputs[5]), sigmoid(inputs[6]), sigmoid(inputs[7]), sigmoid(inputs[8])]
 }
 
 # Predict Function
@@ -207,181 +219,13 @@ func predict(x1: Int, x2: Int, x3: Int, x4: Int, x5: Int, x6: Int, x7: Int, x8: 
     let x9_scaled = x9 * 10000
     let inputs = [x1_scaled, x2_scaled, x3_scaled, x4_scaled, x5_scaled, x6_scaled, x7_scaled, x8_scaled, x9_scaled]
     let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
-    let a1 = sigmoid_activation(z1, 36)
+    let a1 = relu_activation(z1, 36)
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
-    let a2 = sigmoid_activation(z2, 36)
+    let a2 = relu_activation(z2, 36)
     let z3 = linear_forward_3(a2, weights_layer_3, biases_layer_3)
     let a3 = sigmoid(z3[0])
     # Scaling back the output
     let result = a3 / 10000
-    # Debug outputs
-    let debug_outputs = [
-        IntegerEntry("debug_z1_1", z1[0]), 
-        IntegerEntry("debug_a1_1", a1[0]), 
-        IntegerEntry("debug_z1_2", z1[1]), 
-        IntegerEntry("debug_a1_2", a1[1]), 
-        IntegerEntry("debug_z1_3", z1[2]), 
-        IntegerEntry("debug_a1_3", a1[2]), 
-        IntegerEntry("debug_z1_4", z1[3]), 
-        IntegerEntry("debug_a1_4", a1[3]), 
-        IntegerEntry("debug_z1_5", z1[4]), 
-        IntegerEntry("debug_a1_5", a1[4]), 
-        IntegerEntry("debug_z1_6", z1[5]), 
-        IntegerEntry("debug_a1_6", a1[5]), 
-        IntegerEntry("debug_z1_7", z1[6]), 
-        IntegerEntry("debug_a1_7", a1[6]), 
-        IntegerEntry("debug_z1_8", z1[7]), 
-        IntegerEntry("debug_a1_8", a1[7]), 
-        IntegerEntry("debug_z1_9", z1[8]), 
-        IntegerEntry("debug_a1_9", a1[8]), 
-        IntegerEntry("debug_z1_10", z1[9]), 
-        IntegerEntry("debug_a1_10", a1[9]), 
-        IntegerEntry("debug_z1_11", z1[10]), 
-        IntegerEntry("debug_a1_11", a1[10]), 
-        IntegerEntry("debug_z1_12", z1[11]), 
-        IntegerEntry("debug_a1_12", a1[11]), 
-        IntegerEntry("debug_z1_13", z1[12]), 
-        IntegerEntry("debug_a1_13", a1[12]), 
-        IntegerEntry("debug_z1_14", z1[13]), 
-        IntegerEntry("debug_a1_14", a1[13]), 
-        IntegerEntry("debug_z1_15", z1[14]), 
-        IntegerEntry("debug_a1_15", a1[14]), 
-        IntegerEntry("debug_z1_16", z1[15]), 
-        IntegerEntry("debug_a1_16", a1[15]), 
-        IntegerEntry("debug_z1_17", z1[16]), 
-        IntegerEntry("debug_a1_17", a1[16]), 
-        IntegerEntry("debug_z1_18", z1[17]), 
-        IntegerEntry("debug_a1_18", a1[17]), 
-        IntegerEntry("debug_z1_19", z1[18]), 
-        IntegerEntry("debug_a1_19", a1[18]), 
-        IntegerEntry("debug_z1_20", z1[19]), 
-        IntegerEntry("debug_a1_20", a1[19]), 
-        IntegerEntry("debug_z1_21", z1[20]), 
-        IntegerEntry("debug_a1_21", a1[20]), 
-        IntegerEntry("debug_z1_22", z1[21]), 
-        IntegerEntry("debug_a1_22", a1[21]), 
-        IntegerEntry("debug_z1_23", z1[22]), 
-        IntegerEntry("debug_a1_23", a1[22]), 
-        IntegerEntry("debug_z1_24", z1[23]), 
-        IntegerEntry("debug_a1_24", a1[23]), 
-        IntegerEntry("debug_z1_25", z1[24]), 
-        IntegerEntry("debug_a1_25", a1[24]), 
-        IntegerEntry("debug_z1_26", z1[25]), 
-        IntegerEntry("debug_a1_26", a1[25]), 
-        IntegerEntry("debug_z1_27", z1[26]), 
-        IntegerEntry("debug_a1_27", a1[26]), 
-        IntegerEntry("debug_z1_28", z1[27]), 
-        IntegerEntry("debug_a1_28", a1[27]), 
-        IntegerEntry("debug_z1_29", z1[28]), 
-        IntegerEntry("debug_a1_29", a1[28]), 
-        IntegerEntry("debug_z1_30", z1[29]), 
-        IntegerEntry("debug_a1_30", a1[29]), 
-        IntegerEntry("debug_z1_31", z1[30]), 
-        IntegerEntry("debug_a1_31", a1[30]), 
-        IntegerEntry("debug_z1_32", z1[31]), 
-        IntegerEntry("debug_a1_32", a1[31]), 
-        IntegerEntry("debug_z1_33", z1[32]), 
-        IntegerEntry("debug_a1_33", a1[32]), 
-        IntegerEntry("debug_z1_34", z1[33]), 
-        IntegerEntry("debug_a1_34", a1[33]), 
-        IntegerEntry("debug_z1_35", z1[34]), 
-        IntegerEntry("debug_a1_35", a1[34]), 
-        IntegerEntry("debug_z1_36", z1[35]), 
-        IntegerEntry("debug_a1_36", a1[35]), 
-        IntegerEntry("debug_z2_1", z2[0]), 
-        IntegerEntry("debug_a2_1", a2[0]), 
-        IntegerEntry("debug_z2_2", z2[1]), 
-        IntegerEntry("debug_a2_2", a2[1]), 
-        IntegerEntry("debug_z2_3", z2[2]), 
-        IntegerEntry("debug_a2_3", a2[2]), 
-        IntegerEntry("debug_z2_4", z2[3]), 
-        IntegerEntry("debug_a2_4", a2[3]), 
-        IntegerEntry("debug_z2_5", z2[4]), 
-        IntegerEntry("debug_a2_5", a2[4]), 
-        IntegerEntry("debug_z2_6", z2[5]), 
-        IntegerEntry("debug_a2_6", a2[5]), 
-        IntegerEntry("debug_z2_7", z2[6]), 
-        IntegerEntry("debug_a2_7", a2[6]), 
-        IntegerEntry("debug_z2_8", z2[7]), 
-        IntegerEntry("debug_a2_8", a2[7]), 
-        IntegerEntry("debug_z2_9", z2[8]), 
-        IntegerEntry("debug_a2_9", a2[8]), 
-        IntegerEntry("debug_z2_10", z2[9]), 
-        IntegerEntry("debug_a2_10", a2[9]), 
-        IntegerEntry("debug_z2_11", z2[10]), 
-        IntegerEntry("debug_a2_11", a2[10]), 
-        IntegerEntry("debug_z2_12", z2[11]), 
-        IntegerEntry("debug_a2_12", a2[11]), 
-        IntegerEntry("debug_z2_13", z2[12]), 
-        IntegerEntry("debug_a2_13", a2[12]), 
-        IntegerEntry("debug_z2_14", z2[13]), 
-        IntegerEntry("debug_a2_14", a2[13]), 
-        IntegerEntry("debug_z2_15", z2[14]), 
-        IntegerEntry("debug_a2_15", a2[14]), 
-        IntegerEntry("debug_z2_16", z2[15]), 
-        IntegerEntry("debug_a2_16", a2[15]), 
-        IntegerEntry("debug_z2_17", z2[16]), 
-        IntegerEntry("debug_a2_17", a2[16]), 
-        IntegerEntry("debug_z2_18", z2[17]), 
-        IntegerEntry("debug_a2_18", a2[17]), 
-        IntegerEntry("debug_z2_19", z2[18]), 
-        IntegerEntry("debug_a2_19", a2[18]), 
-        IntegerEntry("debug_z2_20", z2[19]), 
-        IntegerEntry("debug_a2_20", a2[19]), 
-        IntegerEntry("debug_z2_21", z2[20]), 
-        IntegerEntry("debug_a2_21", a2[20]), 
-        IntegerEntry("debug_z2_22", z2[21]), 
-        IntegerEntry("debug_a2_22", a2[21]), 
-        IntegerEntry("debug_z2_23", z2[22]), 
-        IntegerEntry("debug_a2_23", a2[22]), 
-        IntegerEntry("debug_z2_24", z2[23]), 
-        IntegerEntry("debug_a2_24", a2[23]), 
-        IntegerEntry("debug_z2_25", z2[24]), 
-        IntegerEntry("debug_a2_25", a2[24]), 
-        IntegerEntry("debug_z2_26", z2[25]), 
-        IntegerEntry("debug_a2_26", a2[25]), 
-        IntegerEntry("debug_z2_27", z2[26]), 
-        IntegerEntry("debug_a2_27", a2[26]), 
-        IntegerEntry("debug_z2_28", z2[27]), 
-        IntegerEntry("debug_a2_28", a2[27]), 
-        IntegerEntry("debug_z2_29", z2[28]), 
-        IntegerEntry("debug_a2_29", a2[28]), 
-        IntegerEntry("debug_z2_30", z2[29]), 
-        IntegerEntry("debug_a2_30", a2[29]), 
-        IntegerEntry("debug_z2_31", z2[30]), 
-        IntegerEntry("debug_a2_31", a2[30]), 
-        IntegerEntry("debug_z2_32", z2[31]), 
-        IntegerEntry("debug_a2_32", a2[31]), 
-        IntegerEntry("debug_z2_33", z2[32]), 
-        IntegerEntry("debug_a2_33", a2[32]), 
-        IntegerEntry("debug_z2_34", z2[33]), 
-        IntegerEntry("debug_a2_34", a2[33]), 
-        IntegerEntry("debug_z2_35", z2[34]), 
-        IntegerEntry("debug_a2_35", a2[34]), 
-        IntegerEntry("debug_z2_36", z2[35]), 
-        IntegerEntry("debug_a2_36", a2[35]), 
-        IntegerEntry("debug_z3_1", z3[0]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_2", z3[1]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_3", z3[2]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_4", z3[3]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_5", z3[4]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_6", z3[5]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_7", z3[6]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_8", z3[7]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_z3_9", z3[8]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_result", result)
-    ]
-    (
-        debug_outputs,
-        result
-    )
+    let debug_outputs = []
+    (debug_outputs, result)
 }

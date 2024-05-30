@@ -21,11 +21,11 @@ if __name__ == "__main__":
 
     # Test linear forward functions
     linear_forward_functions = generate_linear_forward_functions(architecture)
-    print("# Linear Forward Functions\n" + linear_forward_functions + "\n")
+    # print("# Linear Forward Functions\n" + linear_forward_functions + "\n")
 
     # Test activation functions
     activation_functions = generate_activation_functions(architecture)
-    print("# Activation Functions\n" + activation_functions + "\n")
+    # print("# Activation Functions\n" + activation_functions + "\n")
 
     # Test predict function
     predict_function = generate_predict_function(architecture, debug_mode=False)

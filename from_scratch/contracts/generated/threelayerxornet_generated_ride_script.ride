@@ -22,11 +22,13 @@ func linear_forward_1(input: List[Int], weights: List[List[Int]], biases: List[I
     let weighted_sum4 = (input[0] * weights[3][0] + input[1] * weights[3][1]) / 10000 + biases[3]
     [weighted_sum1, weighted_sum2, weighted_sum3, weighted_sum4]
 }
+
 func linear_forward_2(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
     let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1] + input[2] * weights[0][2] + input[3] * weights[0][3]) / 10000 + biases[0]
     let weighted_sum2 = (input[0] * weights[1][0] + input[1] * weights[1][1] + input[2] * weights[1][2] + input[3] * weights[1][3]) / 10000 + biases[1]
     [weighted_sum1, weighted_sum2]
 }
+
 func linear_forward_3(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {
     let weighted_sum1 = (input[0] * weights[0][0] + input[1] * weights[0][1]) / 10000 + biases[0]
     [weighted_sum1]
@@ -59,26 +61,6 @@ func predict(x1: Int, x2: Int) = {
     let a3 = sigmoid(z3[0])
     # Scaling back the output
     let result = a3 / 10000
-    # Debug outputs
-    let debug_outputs = [
-        IntegerEntry("debug_z1_1", z1[0]), 
-        IntegerEntry("debug_a1_1", a1[0]), 
-        IntegerEntry("debug_z1_2", z1[1]), 
-        IntegerEntry("debug_a1_2", a1[1]), 
-        IntegerEntry("debug_z1_3", z1[2]), 
-        IntegerEntry("debug_a1_3", a1[2]), 
-        IntegerEntry("debug_z1_4", z1[3]), 
-        IntegerEntry("debug_a1_4", a1[3]), 
-        IntegerEntry("debug_z2_1", z2[0]), 
-        IntegerEntry("debug_a2_1", a2[0]), 
-        IntegerEntry("debug_z2_2", z2[1]), 
-        IntegerEntry("debug_a2_2", a2[1]), 
-        IntegerEntry("debug_z3_1", z3[0]), 
-        IntegerEntry("debug_a3", a3), 
-        IntegerEntry("debug_result", result)
-    ]
-    (
-        debug_outputs,
-        result
-    )
+    let debug_outputs = []
+    (debug_outputs, result)
 }

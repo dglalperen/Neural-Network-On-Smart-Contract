@@ -64,9 +64,6 @@ def save_generated_ride_script(script, model_name, output_folder="generated"):
         model_name (str): The name of the model to include in the file name.
         output_folder (str): The folder where the output file will be saved.
     """
-    # Create the output folder if it does not exist
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
 
     # Dynamically create the output file name based on the model name
     output_file_name = f"{model_name.lower()}_generated_ride_script.ride"
@@ -93,16 +90,16 @@ if __name__ == "__main__":
         "tictacnet": os.path.join(
             os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
         ),
-        "insurancenet": os.path.join(
-            os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
-        ),
+        # "insurancenet": os.path.join(
+        #     os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
+        # ),
     }
 
     model_classes = {
         "twolayerxornet": TwoLayerXORNet,
         "threelayerxornet": ThreeLayerXORNet,
         "tictacnet": TicTacNet,
-        "insurancenet": InsuranceNet,
+        # "insurancenet": InsuranceNet,
     }
 
     # Extract and save model info
