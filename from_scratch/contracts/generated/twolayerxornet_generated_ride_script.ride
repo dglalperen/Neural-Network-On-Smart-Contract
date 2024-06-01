@@ -22,11 +22,14 @@ func linear_forward_2(input: List[Int], weights: List[List[Int]], biases: List[I
 }
 
 # Activation Functions
-# Sigmoid function
+# Approximate Sigmoid function using a piecewise linear function
 func sigmoid(input: Int) = {
-    if (input < -10000) then 0
-    else if (input > 10000) then 10000
-    else 5000 + input / 2
+    if (input < -60000) then 0
+    else if (input < -30000) then fraction(input + 60000, 25, 10000)
+    else if (input < 0) then fraction(input + 30000, 25, 10000) + 2500
+    else if (input < 30000) then fraction(input, 25, 10000) + 5000
+    else if (input < 60000) then fraction(input - 30000, 25, 10000) + 7500
+    else 10000
 }
 # Sigmoid activation function for a list of values
 func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {
@@ -45,7 +48,7 @@ func predict(x1: Int, x2: Int) = {
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = sigmoid_activation(z2, 1)
     # Scaling back the output
-    let result0 = a2[0] / 10000
+    let result0 = a2[0]
     let debug_outputs = []
     [
         IntegerEntry("move_prediction_0", result0)

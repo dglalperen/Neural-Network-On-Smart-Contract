@@ -57,11 +57,14 @@ def generate_activation_functions(architecture):
         if activation and activation not in activation_funcs:
             if activation == "sigmoid":
                 activation_funcs[activation] = (
-                    f"# Sigmoid function\n"
+                    f"# Approximate Sigmoid function using a piecewise linear function\n"
                     f"func sigmoid(input: Int) = {{\n"
-                    f"    if (input < -10000) then 0\n"
-                    f"    else if (input > 10000) then 10000\n"
-                    f"    else 5000 + input / 2\n"
+                    f"    if (input < -60000) then 0\n"
+                    f"    else if (input < -30000) then fraction(input + 60000, 25, 10000)\n"
+                    f"    else if (input < 0) then fraction(input + 30000, 25, 10000) + 2500\n"
+                    f"    else if (input < 30000) then fraction(input, 25, 10000) + 5000\n"
+                    f"    else if (input < 60000) then fraction(input - 30000, 25, 10000) + 7500\n"
+                    f"    else 10000\n"
                     f"}}\n"
                     f"# Sigmoid activation function for a list of values\n"
                     f"func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {{\n"
@@ -150,7 +153,7 @@ def generate_predict_function(architecture, debug_mode=True):
 
     # Scaling back the output
     output_scaling = [
-        f"let result{j} = a{len(architecture)}[{j}] / 10000"
+        f"let result{j} = a{len(architecture)}[{j}]"
         for j in range(architecture[-1]["output_features"])
     ]
     output_scaling_str = "\n    ".join(output_scaling)

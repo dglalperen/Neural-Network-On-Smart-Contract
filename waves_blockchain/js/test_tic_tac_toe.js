@@ -30,6 +30,7 @@ function makeMove(board) {
 async function performMoves() {
   const boards = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0], // Initial empty board
+    [0, 0, 0, 0, 1, 0, 0, 0, 0], // Player O move
     [1, 0, 0, 0, 0, 0, 0, 0, 0], // Player O move
     [1, -1, 0, 0, 0, 0, 0, 0, 0], // AI move
     [1, -1, 0, 1, 0, 0, 0, 0, 0], // Player O move
