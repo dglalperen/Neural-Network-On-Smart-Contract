@@ -90,16 +90,16 @@ if __name__ == "__main__":
         "tictacnet": os.path.join(
             os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
         ),
-        # "insurancenet": os.path.join(
-        #     os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
-        # ),
+        "insurancenet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
+        ),
     }
 
     model_classes = {
         "twolayerxornet": TwoLayerXORNet,
         "threelayerxornet": ThreeLayerXORNet,
         "tictacnet": TicTacNet,
-        # "insurancenet": InsuranceNet,
+        "insurancenet": InsuranceNet,
     }
 
     # Extract and save model info
