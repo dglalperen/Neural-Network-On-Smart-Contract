@@ -62,10 +62,33 @@ func relu_activation(inputs: List[Int], num_outputs: Int) = {
 
 # Predict Function
 @Callable(i)
-func predict(inputs: List[Int]) = {
+func predict(x1: Int, x2: Int, x3: Int, x4: Int, x5: Int, x6: Int, x7: Int, x8: Int, x9: Int, x10: Int, x11: Int, x12: Int, x13: Int, x14: Int, x15: Int, x16: Int, x17: Int, x18: Int, x19: Int, x20: Int, x21: Int, x22: Int, x23: Int) = {
     # Scale inputs
-    let inputs_scaled = [inputs[0] * 10000, inputs[1] * 10000, inputs[2] * 10000, inputs[3] * 10000, inputs[4] * 10000, inputs[5] * 10000, inputs[6] * 10000, inputs[7] * 10000, inputs[8] * 10000, inputs[9] * 10000, inputs[10] * 10000, inputs[11] * 10000, inputs[12] * 10000, inputs[13] * 10000, inputs[14] * 10000, inputs[15] * 10000, inputs[16] * 10000, inputs[17] * 10000, inputs[18] * 10000, inputs[19] * 10000, inputs[20] * 10000, inputs[21] * 10000, inputs[22] * 10000]
-    let z1 = linear_forward_1(inputs_scaled, weights_layer_1, biases_layer_1)
+    let x1_scaled = x1 * 10000
+    let x2_scaled = x2 * 10000
+    let x3_scaled = x3 * 10000
+    let x4_scaled = x4 * 10000
+    let x5_scaled = x5 * 10000
+    let x6_scaled = x6 * 10000
+    let x7_scaled = x7 * 10000
+    let x8_scaled = x8 * 10000
+    let x9_scaled = x9 * 10000
+    let x10_scaled = x10 * 10000
+    let x11_scaled = x11 * 10000
+    let x12_scaled = x12 * 10000
+    let x13_scaled = x13 * 10000
+    let x14_scaled = x14 * 10000
+    let x15_scaled = x15 * 10000
+    let x16_scaled = x16 * 10000
+    let x17_scaled = x17 * 10000
+    let x18_scaled = x18 * 10000
+    let x19_scaled = x19 * 10000
+    let x20_scaled = x20 * 10000
+    let x21_scaled = x21 * 10000
+    let x22_scaled = x22 * 10000
+    let x23_scaled = x23 * 10000
+    let inputs = [x1_scaled, x2_scaled, x3_scaled, x4_scaled, x5_scaled, x6_scaled, x7_scaled, x8_scaled, x9_scaled, x10_scaled, x11_scaled, x12_scaled, x13_scaled, x14_scaled, x15_scaled, x16_scaled, x17_scaled, x18_scaled, x19_scaled, x20_scaled, x21_scaled, x22_scaled, x23_scaled]
+    let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
     let a1 = relu_activation(z1, 15)
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = z2

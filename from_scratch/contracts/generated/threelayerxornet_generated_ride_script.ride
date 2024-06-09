@@ -55,10 +55,12 @@ func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {
 
 # Predict Function
 @Callable(i)
-func predict(inputs: List[Int]) = {
+func predict(x1: Int, x2: Int) = {
     # Scale inputs
-    let inputs_scaled = [inputs[0] * 10000, inputs[1] * 10000]
-    let z1 = linear_forward_1(inputs_scaled, weights_layer_1, biases_layer_1)
+    let x1_scaled = x1 * 10000
+    let x2_scaled = x2 * 10000
+    let inputs = [x1_scaled, x2_scaled]
+    let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
     let a1 = sigmoid_activation(z1, 4)
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = sigmoid_activation(z2, 2)

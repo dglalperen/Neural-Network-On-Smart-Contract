@@ -7,14 +7,12 @@ const seed =
   "aisle grit neutral neglect midnight blur energy lady mention gesture engage wheel foster juice domain";
 
 // Function to create and broadcast a prediction call
-function predict(inputs) {
+function predict(input1, input2) {
   const callData = {
     function: "predict",
     args: [
-      {
-        type: "list",
-        value: inputs.map((value) => ({ type: "integer", value })),
-      },
+      { type: "integer", value: input1 },
+      { type: "integer", value: input2 },
     ],
   };
 
@@ -35,35 +33,26 @@ function predict(inputs) {
 async function performPredictions() {
   console.log("Prediction for [0, 0]");
   try {
-    const response = await predict([0, 0]);
+    const response = await predict(0, 0);
     console.log("Response:", response);
   } catch (error) {
     console.error("Error:", error);
   }
 
   console.log("Prediction for [0, 1]");
-  try {
-    const response = await predict([0, 1]);
-    console.log("Response:", response);
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  await predict(0, 1)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
 
   console.log("Prediction for [1, 0]");
-  try {
-    const response = await predict([1, 0]);
-    console.log("Response:", response);
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  await predict(1, 0)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
 
   console.log("Prediction for [1, 1]");
-  try {
-    const response = await predict([1, 1]);
-    console.log("Response:", response);
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  await predict(1, 1)
+    .then((response) => console.log("Response:", response))
+    .catch((error) => console.error("Error:", error));
 }
 
 performPredictions();
