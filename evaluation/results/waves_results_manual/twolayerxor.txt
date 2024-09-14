@@ -1,0 +1,37 @@
+Script complexity 151
+
+Callable functions complexity: 
+
+     predict 151
+
+User functions complexity: 
+
+     sigmoid_activation 31
+
+     sigmoid 12
+
+     linear_forward_2 20
+
+     linear_forward_1 40
+
+Global variables complexity: 
+
+     weights_layer_1 6
+
+     biases_layer_1 2
+
+     weights_layer_2 3
+
+     biases_layer_2 1
+
+predict  ([0, 0])
+value: 6
+
+predict  ([0, 1])
+value: 7530
+
+predict  ([1, 0])
+value: 7530
+
+predict  ([1, 0])
+value: 97

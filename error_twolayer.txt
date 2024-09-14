@@ -1,0 +1,90 @@
+(blockchain) (base) dglalperen@dglalperen js % node twolayer_xor.js 
+Prediction for [0, 0]
+Error: {
+  error: 306,
+  message: 'Error while executing dApp: Index 1 out of bounds for length 1',
+  transaction: {
+    type: 16,
+    id: 'brZ4NKrdoKZQDmxGrXiQMkNpBUB5kRbtbzydeyhGQb4',
+    fee: 500000,
+    feeAssetId: null,
+    timestamp: 1717925042799,
+    version: 2,
+    chainId: 84,
+    sender: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    senderPublicKey: '2AWdnJuBMzufXSjTvzVcawBQQhnhF1iXR6QNVgwn33oc',
+    proofs: [
+      'hnqKhA7qkXMgbv3ygtj3BCXz62neSk9Ly4iPpmik1XvMZf3PCFdeoma6nqSwebbL7Wk1Qq24LXfw9evKUTdYL8v'
+    ],
+    dApp: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    payment: [],
+    call: { function: 'predict', args: [Array] }
+  }
+}
+Prediction for [0, 1]
+Error: {
+  error: 306,
+  message: 'Error while executing dApp: Index 1 out of bounds for length 1',
+  transaction: {
+    type: 16,
+    id: '3hMTEFUFZjaoN4Gq1yFxPaQ6GRsWHfXUBbP5d9i7RqHP',
+    fee: 500000,
+    feeAssetId: null,
+    timestamp: 1717925042985,
+    version: 2,
+    chainId: 84,
+    sender: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    senderPublicKey: '2AWdnJuBMzufXSjTvzVcawBQQhnhF1iXR6QNVgwn33oc',
+    proofs: [
+      '2CTw4T6s4T31stJocDEGiBp1Po4pLPsmEQ78zY3dDB4hYCokaeBX6LMo5dHbgW9QSEZVN3gm39wZKrbfvYAFrVF8'
+    ],
+    dApp: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    payment: [],
+    call: { function: 'predict', args: [Array] }
+  }
+}
+Prediction for [1, 0]
+Error: {
+  error: 306,
+  message: 'Error while executing dApp: Index 1 out of bounds for length 1',
+  transaction: {
+    type: 16,
+    id: '3ZzQJg74sWGvbvTFKeZyvVoTQzu8cWencmSVYCUxNaZx',
+    fee: 500000,
+    feeAssetId: null,
+    timestamp: 1717925043118,
+    version: 2,
+    chainId: 84,
+    sender: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    senderPublicKey: '2AWdnJuBMzufXSjTvzVcawBQQhnhF1iXR6QNVgwn33oc',
+    proofs: [
+      '4CjYUo1ypzD5or4nxXpFXdBtYefuGkhas69QBWkwXfixCDBaK3mSgpXsxHsSaWqUKYVHvhPhwRx4DRsyzZxcse2u'
+    ],
+    dApp: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    payment: [],
+    call: { function: 'predict', args: [Array] }
+  }
+}
+Prediction for [1, 1]
+Error: {
+  error: 306,
+  message: 'Error while executing dApp: Index 1 out of bounds for length 1',
+  transaction: {
+    type: 16,
+    id: 'A2hvCb5d8KV26V5vPuy2Sxp5kVCE5GSj4bYZrdNmixJ4',
+    fee: 500000,
+    feeAssetId: null,
+    timestamp: 1717925043165,
+    version: 2,
+    chainId: 84,
+    sender: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    senderPublicKey: '2AWdnJuBMzufXSjTvzVcawBQQhnhF1iXR6QNVgwn33oc',
+    proofs: [
+      '2Xc6pVs5NVdtbHEvFsYGYEqwsE4dWbTFxRjBeqpDeZUzjVdQkhTX6sG3ySBwAzCyQFFRkfHNqbFNoo5MQLcpXHt2'
+    ],
+    dApp: '3N3n75UqB8G1GKmXFr4zPhKCjGcqJPRSuJY',
+    payment: [],
+    call: { function: 'predict', args: [Array] }
+  }
+}
+(blockchain) (base) dglalperen@dglalperen js %      

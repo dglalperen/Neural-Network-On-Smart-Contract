@@ -10,12 +10,7 @@ const seed =
 function makeMove(board) {
   const callData = {
     function: "predict",
-    args: [
-      {
-        type: "list",
-        value: board.map((value) => ({ type: "integer", value })),
-      },
-    ],
+    args: board.map((value) => ({ type: "integer", value })),
   };
 
   const signedTx = invokeScript(

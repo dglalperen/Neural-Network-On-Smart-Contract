@@ -8,7 +8,7 @@ from generate_ride import (
 
 
 if __name__ == "__main__":
-    json_file = "../model_info/insurancenet_info.json"
+    json_file = "../model_info/two_layerxornet.json"
     with open(json_file, "r") as f:
         model = json.load(f)
 

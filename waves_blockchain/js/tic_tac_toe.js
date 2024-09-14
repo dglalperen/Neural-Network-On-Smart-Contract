@@ -10,7 +10,12 @@ const seed =
 function makeMove(board) {
   const callData = {
     function: "predict",
-    args: board.map((value) => ({ type: "integer", value })),
+    args: [
+      {
+        type: "list",
+        value: board.map((value) => ({ type: "integer", value })),
+      },
+    ],
   };
 
   const signedTx = invokeScript(
@@ -29,18 +34,12 @@ function makeMove(board) {
 // Example usage
 async function performMoves() {
   const boards = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0], // Initial empty board
-    [0, 0, 0, 0, 1, 0, 0, 0, 0], // Player O move
-    [1, 0, 0, 0, 0, 0, 0, 0, 0], // Player O move
-    [1, -1, 0, 0, 0, 0, 0, 0, 0], // AI move
-    [1, -1, 0, 1, 0, 0, 0, 0, 0], // Player O move
-    [1, -1, -1, 1, 0, 0, 0, 0, 0], // AI move
-    [-1, -1, 0, 1, 0, 0, 0, 0, 0], // Player O move (Player is about to win)
-    [-1, 0, 0, 1, 0, 0, 0, 0, -1], // AI move (AI blocks player)
-    [-1, -1, 1, 0, 0, 0, 0, 0, 0], // Player O move (Player is about to win)
-    [-1, -1, 1, 0, 1, 0, 0, 0, 0], // AI move (AI blocks player)
-    [-1, -1, 1, 0, -1, 0, 1, 0, 0], // Player O move (Player is about to win)
-    [-1, -1, 1, 0, -1, -1, 1, 0, 1], // AI move (AI blocks player)
+    [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [-1, -1, 1, 0, -1, -1, 1, 0, 1],
+    [-1, -1, 1, 0, -1, 0, 1, 0, 0],
+    [-1, -1, 1, 0, 1, 0, 0, 0, 0],
+    [-1, -1, 1, 0, 0, 0, 0, 0, 0],
+    [-1, 0, 0, 1, 0, 0, 0, 0, -1],
   ];
 
   for (let i = 0; i < boards.length; i++) {

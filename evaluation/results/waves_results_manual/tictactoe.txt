@@ -1,0 +1,101 @@
+Script complexity 18493
+
+Callable functions complexity: 
+
+     predict 18493
+
+User functions complexity: 
+
+     sigmoid_activation 136
+
+     sigmoid 12
+
+     linear_forward_2 10512
+
+     relu 1
+
+     linear_forward_1 2736
+
+     relu_activation 145
+
+     linear_forward_3 2628
+
+Global variables complexity: 
+
+     biases_layer_2 36
+
+     biases_layer_3 9
+
+     weights_layer_2 1332
+
+     weights_layer_1 360
+
+     weights_layer_3 333
+
+     biases_layer_1 36
+
+ predict  ([0, 0, 0, 0, 1, 0, 0, 0, 0])
+value: 8880
+value: 7554
+value: 7592
+value: 8751
+value: 200
+value: 7529
+value: 8776
+value: 7614
+value: 7605
+
+predict  ([-1, -1, 1, 0, -1, -1, 1, 0, 1])
+value: 0
+value: 20
+value: 0
+value: 131
+value: 0
+value: 44
+value: 0
+value: 8905
+value: 0
+
+predict  ([-1, -1, 1, 0, -1, 0, 1, 0, 0])
+value: 0
+value: 192
+value: 0
+value: 36
+value: 0
+value: 7522
+value: 0
+value: 7646
+value: 8767
+
+predict  ([-1, -1, 1, 0, 1, 0, 0, 0, 0])
+value: 0
+value: 96
+value: 0
+value: 76
+value: 0
+value: 83
+value: 7648
+value: 18
+value: 72
+
+predict  ([-1, -1, 1, 0, 0, 0, 0, 0, 0])
+value: 0
+value: 15
+value: 0
+value: 8
+value: 5030
+value: 7540
+value: 7582
+value: 34
+value: 5035
+
+predict  ([-1, 0, 0, 1, 0, 0, 0, 0, -1])
+value: 179
+value: 5090
+value: 72
+value: 0
+value: 8856
+value: 7605
+value: 5059
+value: 7621
+value: 100

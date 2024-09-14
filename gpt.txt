@@ -1,0 +1,746 @@
+generate_ride.py:
+import json
+
+
+def generate_weights_and_biases(architecture, parameters):
+    weights = parameters["weights"]
+    biases = parameters["biases"]
+    layer_defs = []
+
+    for i, (layer, weight_layer, bias_layer) in enumerate(
+        zip(architecture, weights, biases)
+    ):
+        weight_defs = f"let weights_layer_{i+1} = " + str(
+            [[int(w * 10000) for w in ws] for ws in weight_layer]
+        ).replace("], [", "],\n    [")
+        bias_defs = f"let biases_layer_{i+1} = " + str(
+            [int(b * 10000) for b in bias_layer]
+        ).replace("[", "[ ").replace("]", " ]")
+
+        layer_defs.append(weight_defs)
+        layer_defs.append(bias_defs)
+
+    return "\n".join(layer_defs)
+
+
+def generate_linear_forward_functions(architecture):
+    linear_funcs = []
+
+    def linear_func_def(i, input_size, output_size):
+        weighted_sums = [
+            f"let weighted_sum{j+1} = ("
+            + " + ".join([f"input[{k}] * weights[{j}][{k}]" for k in range(input_size)])
+            + f") / 10000 + biases[{j}]"
+            for j in range(output_size)
+        ]
+        return (
+            f"func linear_forward_{i}(input: List[Int], weights: List[List[Int]], biases: List[Int]) = {{\n"
+            f"    " + "\n    ".join(weighted_sums) + "\n"
+            f"    ["
+            + ", ".join([f"weighted_sum{j+1}" for j in range(output_size)])
+            + "]\n"
+            f"}}"
+        )
+
+    for i, layer in enumerate(architecture):
+        input_features = layer["input_features"]
+        output_features = layer["output_features"]
+        linear_funcs.append(linear_func_def(i + 1, input_features, output_features))
+
+    return "\n\n".join(linear_funcs)
+
+
+def generate_activation_functions(architecture):
+    activation_funcs = {}
+
+    for layer in architecture:
+        activation = layer.get("activation")
+        if activation and activation not in activation_funcs:
+            if activation == "sigmoid":
+                activation_funcs[activation] = (
+                    f"# Approximate Sigmoid function using a piecewise linear function\n"
+                    f"func sigmoid(input: Int) = {{\n"
+                    f"    if (input < -80000) then 0\n"
+                    f"    else if (input < -60000) then fraction(input + 80000, 125, 10000)\n"
+                    f"    else if (input < -40000) then fraction(input + 60000, 100, 10000)\n"
+                    f"    else if (input < -20000) then fraction(input + 40000, 75, 10000)\n"
+                    f"    else if (input < 0) then fraction(input + 20000, 50, 10000)\n"
+                    f"    else if (input < 20000) then fraction(input, 50, 10000) + 5000\n"
+                    f"    else if (input < 40000) then fraction(input - 20000, 75, 10000) + 7500\n"
+                    f"    else if (input < 60000) then fraction(input - 40000, 100, 10000) + 8750\n"
+                    f"    else if (input < 80000) then fraction(input - 60000, 125, 10000) + 9375\n"
+                    f"    else 10000\n"
+                    f"}}\n"
+                    f"# Sigmoid activation function for a list of values\n"
+                    f"func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {{\n"
+                    f"    if (num_outputs == 1) then [sigmoid(inputs[0])]\n"
+                    f"    else ["
+                    + ", ".join(
+                        [
+                            f"sigmoid(inputs[{j}])"
+                            for j in range(layer["output_features"])
+                        ]
+                    )
+                    + "]\n"
+                    f"}}"
+                )
+            elif activation == "relu":
+                activation_funcs[activation] = (
+                    f"# ReLU function\n"
+                    f"func relu(input: Int) = {{\n"
+                    f"    if (input < 0) then 0\n"
+                    f"    else input\n"
+                    f"}}\n"
+                    f"# ReLU activation function for a list of values\n"
+                    f"func relu_activation(inputs: List[Int], num_outputs: Int) = {{\n"
+                    f"    if (num_outputs == 1) then [relu(inputs[0])]\n"
+                    f"    else ["
+                    + ", ".join(
+                        [f"relu(inputs[{j}])" for j in range(layer["output_features"])]
+                    )
+                    + "]\n"
+                    f"}}"
+                )
+            # Add other activation functions as needed
+
+    return "\n\n".join(activation_funcs.values())
+
+
+def generate_predict_function(architecture, debug_mode=True):
+    input_scaling_parts = [
+        f"let x{j+1}_scaled = inputs[{j}] * 10000"
+        for j in range(architecture[0]["input_features"])
+    ]
+    input_scaling = "\n    ".join(input_scaling_parts)
+    inputs_list = ", ".join(
+        [f"x{j+1}_scaled" for j in range(architecture[0]["input_features"])]
+    )
+
+    predict_func_parts = [
+        "@Callable(i)",
+        f"func predict(inputs: List[Int]) = {{",
+        "    # Scale inputs",
+        f"    {input_scaling}",
+        f"    let scaled_inputs = [{inputs_list}]",
+    ]
+
+    for i in range(len(architecture)):
+        if i == 0:
+            predict_func_parts.extend(
+                [
+                    f"    let z{i+1} = linear_forward_{i+1}(scaled_inputs, weights_layer_{i+1}, biases_layer_{i+1})"
+                ]
+            )
+            if architecture[i]["activation"]:
+                predict_func_parts.append(
+                    f"    let a{i+1} = {architecture[i]['activation']}_activation(z{i+1}, {architecture[i]['output_features']})"
+                )
+        elif i < len(architecture) - 1:
+            predict_func_parts.extend(
+                [
+                    f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})"
+                ]
+            )
+            if architecture[i]["activation"]:
+                predict_func_parts.append(
+                    f"    let a{i+1} = {architecture[i]['activation']}_activation(z{i+1}, {architecture[i]['output_features']})"
+                )
+        else:
+            predict_func_parts.extend(
+                [
+                    f"    let z{i+1} = linear_forward_{i+1}(a{i}, weights_layer_{i+1}, biases_layer_{i+1})"
+                ]
+            )
+            if architecture[i]["activation"]:
+                predict_func_parts.append(
+                    f"    let a{i+1} = {architecture[i]['activation']}_activation(z{i+1}, {architecture[i]['output_features']})"
+                )
+            else:
+                predict_func_parts.append(f"    let a{i+1} = z{i+1}")
+
+    # Scaling back the output
+    output_scaling = [
+        f"let result{j} = a{len(architecture)}[{j}]"
+        for j in range(architecture[-1]["output_features"])
+    ]
+    output_scaling_str = "\n    ".join(output_scaling)
+
+    predict_func_parts.append("    # Scaling back the output")
+    predict_func_parts.append(f"    {output_scaling_str}")
+
+    if debug_mode:
+        predict_func_parts.append("    # Debug outputs")
+        predict_func_parts.append("    let debug_outputs = []")
+
+        predict_func_parts.append("    [")
+        for j in range(architecture[-1]["output_features"]):
+            if j == architecture[-1]["output_features"] - 1:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j})'
+                )
+            else:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j}),'
+                )
+        predict_func_parts.append("    ] ++ debug_outputs")
+
+    else:
+        predict_func_parts.append("    let debug_outputs = []")
+        predict_func_parts.append("    [")
+        for j in range(architecture[-1]["output_features"]):
+            if j == architecture[-1]["output_features"] - 1:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j})'
+                )
+            else:
+                predict_func_parts.append(
+                    f'        IntegerEntry("move_prediction_{j}", result{j}),'
+                )
+        predict_func_parts.append("    ] ++ debug_outputs")
+
+    predict_func_parts.append("}")
+
+    return "\n".join(predict_func_parts)
+
+
+def generate_ride_script(json_file, debug_mode=True):
+    with open(json_file, "r") as f:
+        model = json.load(f)
+
+    architecture = model["architecture"]
+    parameters = model["parameters"]
+
+    weights_and_biases = generate_weights_and_biases(architecture, parameters)
+    linear_forward_functions = generate_linear_forward_functions(architecture)
+    activation_functions = generate_activation_functions(architecture)
+    predict_function = generate_predict_function(architecture, debug_mode)
+
+    # Combine all parts
+    ride_script = (
+        "{-# STDLIB_VERSION 7 #-}\n"
+        "{-# CONTENT_TYPE DAPP #-}\n"
+        "{-# SCRIPT_TYPE ACCOUNT #-}\n\n"
+        "# Weights and Biases\n" + weights_and_biases + "\n\n"
+        "# Linear Forward Functions\n" + linear_forward_functions + "\n\n"
+        "# Activation Functions\n" + activation_functions + "\n\n"
+        "# Predict Function\n" + predict_function
+    )
+
+    return ride_script
+
+
+architecture.py:
+from torch import nn
+import torch
+
+
+def get_network_architecture(model):
+    """
+    Gets the architecture of the neural network.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model.
+
+    Returns:
+        list: A list containing the details of each layer.
+    """
+    architecture = []
+
+    # Convert activations list to a dictionary for quick lookup
+    activations_dict = dict(model.activations)
+
+    for layer_name, layer in model.named_children():
+        if isinstance(layer, torch.nn.Linear):
+            layer_info = {
+                "type": "Linear",
+                "input_features": layer.in_features,
+                "output_features": layer.out_features,
+                "activation": activations_dict.get(layer_name, None),
+            }
+            architecture.append(layer_info)
+
+    return architecture
+
+
+class TwoLayerXORNet(torch.nn.Module):
+    def __init__(self):
+        super(TwoLayerXORNet, self).__init__()
+        # Define network layers
+        self.layer1 = torch.nn.Linear(2, 2)
+        self.layer2 = torch.nn.Linear(2, 1)
+        # Define activation functions for each layer
+        self.activations = {"layer1": "sigmoid", "layer2": "sigmoid"}
+
+    def forward(self, x):
+        x = torch.sigmoid(self.layer1(x))
+        x = torch.sigmoid(self.layer2(x))
+        return x
+
+
+class TicTacNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.dl1 = nn.Linear(9, 36)
+        self.dl2 = nn.Linear(36, 36)
+        self.output_layer = nn.Linear(36, 9)
+        self.activations = [
+            ("dl1", "relu"),
+            ("dl2", "relu"),
+            ("output_layer", "sigmoid"),
+        ]
+
+    def forward(self, x):
+        x = self.dl1(x)
+        x = torch.relu(x)
+
+        x = self.dl2(x)
+        x = torch.relu(x)
+
+        x = self.output_layer(x)
+        x = torch.sigmoid(x)
+
+        return x
+
+
+if __name__ == "__main__":
+    model = TwoLayerXORNet()
+    architecture = get_network_architecture(model)
+    print(architecture)
+
+    model = TicTacNet()
+    architecture = get_network_architecture(model)
+    print(architecture)
+
+extractors.py:
+import torch
+
+
+def extract_model_parameters(model):
+    """
+    Extracts weights and biases from a pretrained PyTorch model.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model.
+
+    Returns:
+        dict: A dictionary containing the layers' weights, biases, and layer details.
+    """
+    model_parameters = {
+        "layers": [],
+        "weights": [],
+        "biases": [],
+    }
+
+    for name, param in model.named_parameters():
+        if "weight" in name:
+            model_parameters["weights"].append(param.detach().numpy().tolist())
+            layer_name = name.split(".")[0]
+            model_parameters["layers"].append(
+                {
+                    "name": layer_name,
+                    "num_neurons": param.size(0),
+                    "num_inputs": param.size(1),
+                }
+            )
+        elif "bias" in name:
+            model_parameters["biases"].append(param.detach().numpy().tolist())
+
+    return model_parameters
+
+main.py:
+import json
+import torch
+import os
+from src.extractors import extract_model_parameters
+from src.architecture import get_network_architecture
+from contracts.generate_ride import generate_ride_script
+
+
+def extract_and_save_model_info(model_class, model_path, output_folder="model_info"):
+    """
+    Extracts the model parameters and architecture and saves them to a JSON file.
+
+    Args:
+        model_class (torch.nn.Module): The class of the model to be loaded.
+        model_path (str): The path to the pretrained model.
+        output_folder (str): The folder where the output file will be saved.
+    """
+    # Load the pretrained model
+    model = model_class()
+    state_dict = torch.load(model_path)
+
+    model.load_state_dict(state_dict)
+
+    # Extract model parameters
+    model_parameters = extract_model_parameters(model)
+
+    # Get network architecture
+    network_architecture = get_network_architecture(model)
+
+    # Combine parameters and architecture into a single dictionary
+    model_info = {"architecture": network_architecture, "parameters": model_parameters}
+
+    # Dynamically create the output file name based on the model name
+    output_file_name = f"{model.__class__.__name__.lower()}_info.json"
+
+    # Create the output folder if it does not exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Save the combined information to a JSON file
+    with open(os.path.join(output_folder, output_file_name), "w") as f:
+        json.dump(model_info, f, indent=4)
+
+
+def serialize_parameters(parameters):
+    serialized_params = {
+        "layers": parameters["layers"],
+        "weights": [
+            [int(w * 10000) for w in layer.flatten()] for layer in parameters["weights"]
+        ],
+        "biases": [
+            [int(b * 10000) for b in layer.flatten()] for layer in parameters["biases"]
+        ],
+    }
+    return serialized_params
+
+
+def save_generated_ride_script(script, model_name, output_folder="generated"):
+    """
+    Save the generated RIDE script to a file.
+
+    Args:
+        script (str): The generated RIDE script.
+        model_name (str): The name of the model to include in the file name.
+        output_folder (str): The folder where the output file will be saved.
+    """
+
+    # Dynamically create the output file name based on the model name
+    output_file_name = f"{model_name.lower()}_generated_ride_script.ride"
+
+    # Save the RIDE script to a file
+    with open(os.path.join("contracts", output_folder, output_file_name), "w") as f:
+        f.write(script)
+
+
+if __name__ == "__main__":
+    # Example usage
+    from models.two_layer_xor_net import TwoLayerXORNet
+    from models.three_layer_xor_net import ThreeLayerXORNet
+    from models.tic_tac_toe_net import TicTacNet
+    from models.insurance_net import InsuranceNet
+
+    model_paths = {
+        "twolayerxornet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "two_layer_xor_net.pth"
+        ),
+        "threelayerxornet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "three_layer_xor_net.pth"
+        ),
+        "tictacnet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "tic_tac_toe_net.pth"
+        ),
+        "insurancenet": os.path.join(
+            os.path.dirname(__file__), "trained_torch_models", "insurance_net.pth"
+        ),
+    }
+
+    model_classes = {
+        "twolayerxornet": TwoLayerXORNet,
+        "threelayerxornet": ThreeLayerXORNet,
+        "tictacnet": TicTacNet,
+        "insurancenet": InsuranceNet,
+    }
+
+    # Extract and save model info
+    for model_name, model_path in model_paths.items():
+        extract_and_save_model_info(model_classes[model_name], model_path)
+
+    # Generate and save RIDE scripts
+    for model_name in model_paths.keys():
+        json_file_path = os.path.join("model_info", f"{model_name}_info.json")
+        generated_script = generate_ride_script(json_file_path, debug_mode=False)
+        save_generated_ride_script(generated_script, model_name)
+        print(f"RIDE script for {model_name} generated successfully!")
+
+
+results:
+
+insurance pytorch:
+
+LGT_COND,PER_ONE_AGE,PER_ONE_SEX,PER_TWO_AGE,PER_TWO_SEX,VEH_ONE_IMP,VEH_TWO_IMP,VEH_ONE_DR_SF1,VEH_ONE_DR_SF2,VEH_ONE_DR_SF3,VEH_ONE_DR_SF4,VEH_TWO_DR_SF1,VEH_TWO_DR_SF2,VEH_TWO_DR_SF3,VEH_TWO_DR_SF4,VEH_ONE_DR_VIO1,VEH_ONE_DR_VIO2,VEH_ONE_DR_VIO3,VEH_ONE_DR_VIO4,VEH_TWO_DR_VIO1,VEH_TWO_DR_VIO2,VEH_TWO_DR_VIO3,VEH_TWO_DR_VIO4,Predicted Class,Probability Class 0,Probability Class 1
+3.0,41.0,1.0,62.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.9994313,0.0005686151
+1.0,21.0,2.0,71.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.99963176,0.00036819858
+1.0,22.0,1.0,19.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.9987369,0.0012630534
+3.0,56.0,1.0,50.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.99881786,0.0011820748
+3.0,21.0,1.0,39.0,2.0,1.0,0.0,36.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.99999785,2.1496521e-06
+1.0,30.0,1.0,35.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.9994203,0.0005797214
+3.0,23.0,1.0,47.0,1.0,1.0,0.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,0.0,0.0,0.0,72.0,0.0,0.0,0.0,0,0.993052,0.006948008
+1.0,24.0,1.0,35.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,58.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.9999075,9.255687e-05
+1.0,41.0,1.0,35.0,2.0,1.0,0.0,36.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.99999833,1.6438339e-06
+1.0,72.0,1.0,36.0,1.0,1.0,0.0,6.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.9999498,5.016223e-05
+
+insurance wave smart contract:
+Script complexity 3644
+
+Callable functions complexity: 
+
+     predict 3644
+
+User functions complexity: 
+
+     linear_forward_2 248
+
+     relu 1
+
+     linear_forward_1 2820
+
+     relu_activation 61
+
+Global variables complexity: 
+
+     weights_layer_1 360
+
+     biases_layer_1 15
+
+     weights_layer_2 32
+
+     biases_layer_2 2
+
+
+predict  ([3, 41, 1, 62, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 62432
+value: -165121
+
+predict  ([1, 21, 2, 71, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 14310
+value: -117091
+
+predict  ([1, 22, 1, 19, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 59215
+value: -96430
+
+predict  ([3, 56, 1, 50, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 101052
+value: -197276
+
+predict  ([3, 21, 1, 39, 2, 1, 0, 36, 6, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0])
+value: 2754647
+value: -2756470
+
+predict  ([1, 30, 1, 35, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 62405
+value: -124407
+
+three layer xor pytorch:
+Input 1,Input 2,Output
+0,0,0.00012810441
+0,1,0.99985635
+1,0,0.9997887
+1,1,0.00022651104
+
+
+three layer xor wave smart contract:
+Script complexity 413
+
+Callable functions complexity: 
+
+     predict 413
+
+User functions complexity: 
+
+     sigmoid_activation 64
+
+     sigmoid 12
+
+     linear_forward_2 72
+
+     linear_forward_1 80
+
+     linear_forward_3 20
+
+Global variables complexity: 
+
+     biases_layer_2 2
+
+     biases_layer_3 1
+
+     weights_layer_2 10
+
+     weights_layer_1 12
+
+     weights_layer_3 3
+
+     biases_layer_1 4
+
+predict  ([0, 0])
+value: 138
+
+predict  ([0, 1])
+value: 9483
+
+predict  ([1, 0])
+value: 9490
+
+predict  ([1, 0])
+value: 146
+
+tictactoe pytorch:
+Input 1,Input 2,Input 3,Input 4,Input 5,Input 6,Input 7,Input 8,Input 9,Output 1,Output 2,Output 3,Output 4,Output 5,Output 6,Output 7,Output 8,Output 9
+0,0,0,0,1,0,0,0,0,0.9950825,0.9383222,0.96204555,0.9823178,0.001666549,0.9165372,0.98622394,0.9714984,0.96801555
+-1,-1,1,0,-1,-1,1,0,1,2.0662284e-08,0.00039400242,1.217986e-08,0.09508949,2.4527114e-06,0.0038446453,2.5025397e-06,0.9961577,7.4539585e-06
+-1,-1,1,0,-1,0,1,0,0,1.0240752e-05,0.016720578,3.462015e-07,0.22061318,2.8350748e-06,0.9087948,2.8757472e-07,0.9812826,0.9848409
+-1,-1,1,0,1,0,0,0,0,4.280266e-06,0.0007216195,3.2762044e-05,0.38569242,2.6844824e-05,0.41990966,0.98158777,0.022796936,0.046175413
+-1,-1,1,0,0,0,0,0,0,6.238411e-05,0.0028813495,1.4459383e-06,0.13897438,0.64699376,0.92649794,0.95672536,0.2112867,0.6708425
+-1,0,0,1,0,0,0,0,-1,0.014745355,0.8582672,0.3646987,1.4160687e-06,0.9937063,0.96793795,0.7676938,0.9740812,0.0067129536
+
+
+tictactoe waves smart contract:
+Script complexity 18493
+
+Callable functions complexity: 
+
+     predict 18493
+
+User functions complexity: 
+
+     sigmoid_activation 136
+
+     sigmoid 12
+
+     linear_forward_2 10512
+
+     relu 1
+
+     linear_forward_1 2736
+
+     relu_activation 145
+
+     linear_forward_3 2628
+
+Global variables complexity: 
+
+     biases_layer_2 36
+
+     biases_layer_3 9
+
+     weights_layer_2 1332
+
+     weights_layer_1 360
+
+     weights_layer_3 333
+
+     biases_layer_1 36
+
+ predict  ([0, 0, 0, 0, 1, 0, 0, 0, 0])
+value: 8880
+value: 7554
+value: 7592
+value: 8751
+value: 200
+value: 7529
+value: 8776
+value: 7614
+value: 7605
+
+predict  ([-1, -1, 1, 0, -1, -1, 1, 0, 1])
+value: 0
+value: 20
+value: 0
+value: 131
+value: 0
+value: 44
+value: 0
+value: 8905
+value: 0
+
+predict  ([-1, -1, 1, 0, -1, 0, 1, 0, 0])
+value: 0
+value: 192
+value: 0
+value: 36
+value: 0
+value: 7522
+value: 0
+value: 7646
+value: 8767
+
+predict  ([-1, -1, 1, 0, 1, 0, 0, 0, 0])
+value: 0
+value: 96
+value: 0
+value: 76
+value: 0
+value: 83
+value: 7648
+value: 18
+value: 72
+
+predict  ([-1, -1, 1, 0, 0, 0, 0, 0, 0])
+value: 0
+value: 15
+value: 0
+value: 8
+value: 5030
+value: 7540
+value: 7582
+value: 34
+value: 5035
+
+predict  ([-1, 0, 0, 1, 0, 0, 0, 0, -1])
+value: 179
+value: 5090
+value: 72
+value: 0
+value: 8856
+value: 7605
+value: 5059
+value: 7621
+value: 100
+
+two layer xor pytorch:
+Input 1,Input 2,Output
+0,0,0.03745927
+0,1,0.9667341
+1,0,0.966729
+1,1,0.03505255
+
+
+twolayer xor waves smart contract:
+Script complexity 151
+
+Callable functions complexity: 
+
+     predict 151
+
+User functions complexity: 
+
+     sigmoid_activation 31
+
+     sigmoid 12
+
+     linear_forward_2 20
+
+     linear_forward_1 40
+
+Global variables complexity: 
+
+     weights_layer_1 6
+
+     biases_layer_1 2
+
+     weights_layer_2 3
+
+     biases_layer_2 1
+
+predict  ([0, 0])
+value: 6
+
+predict  ([0, 1])
+value: 7530
+
+predict  ([1, 0])
+value: 7530
+
+predict  ([1, 0])
+value: 97

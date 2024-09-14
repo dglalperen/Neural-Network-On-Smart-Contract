@@ -37,17 +37,18 @@ func sigmoid(input: Int) = {
 }
 # Sigmoid activation function for a list of values
 func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {
-    [sigmoid(inputs[0]), sigmoid(inputs[1])]
+    if (num_outputs == 1) then [sigmoid(inputs[0])]
+    else [sigmoid(inputs[0]), sigmoid(inputs[1])]
 }
 
 # Predict Function
 @Callable(i)
-func predict(x1: Int, x2: Int) = {
+func predict(inputs: List[Int]) = {
     # Scale inputs
-    let x1_scaled = x1 * 10000
-    let x2_scaled = x2 * 10000
-    let inputs = [x1_scaled, x2_scaled]
-    let z1 = linear_forward_1(inputs, weights_layer_1, biases_layer_1)
+    let x1_scaled = inputs[0] * 10000
+    let x2_scaled = inputs[1] * 10000
+    let scaled_inputs = [x1_scaled, x2_scaled]
+    let z1 = linear_forward_1(scaled_inputs, weights_layer_1, biases_layer_1)
     let a1 = sigmoid_activation(z1, 2)
     let z2 = linear_forward_2(a1, weights_layer_2, biases_layer_2)
     let a2 = sigmoid_activation(z2, 1)

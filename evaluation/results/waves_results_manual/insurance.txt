@@ -1,0 +1,51 @@
+Script complexity 3644
+
+Callable functions complexity: 
+
+     predict 3644
+
+User functions complexity: 
+
+     linear_forward_2 248
+
+     relu 1
+
+     linear_forward_1 2820
+
+     relu_activation 61
+
+Global variables complexity: 
+
+     weights_layer_1 360
+
+     biases_layer_1 15
+
+     weights_layer_2 32
+
+     biases_layer_2 2
+
+
+predict  ([3, 41, 1, 62, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 62432
+value: -165121
+
+predict  ([1, 21, 2, 71, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 14310
+value: -117091
+
+predict  ([1, 22, 1, 19, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 59215
+value: -96430
+
+predict  ([3, 56, 1, 50, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 101052
+value: -197276
+
+predict  ([3, 21, 1, 39, 2, 1, 0, 36, 6, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0])
+value: 2754647
+value: -2756470
+
+predict  ([1, 30, 1, 35, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+value: 62405
+value: -124407
+

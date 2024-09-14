@@ -72,7 +72,8 @@ def generate_activation_functions(architecture):
                     f"}}\n"
                     f"# Sigmoid activation function for a list of values\n"
                     f"func sigmoid_activation(inputs: List[Int], num_outputs: Int) = {{\n"
-                    f"    ["
+                    f"    if (num_outputs == 1) then [sigmoid(inputs[0])]\n"
+                    f"    else ["
                     + ", ".join(
                         [
                             f"sigmoid(inputs[{j}])"
@@ -91,7 +92,8 @@ def generate_activation_functions(architecture):
                     f"}}\n"
                     f"# ReLU activation function for a list of values\n"
                     f"func relu_activation(inputs: List[Int], num_outputs: Int) = {{\n"
-                    f"    ["
+                    f"    if (num_outputs == 1) then [relu(inputs[0])]\n"
+                    f"    else ["
                     + ", ".join(
                         [f"relu(inputs[{j}])" for j in range(layer["output_features"])]
                     )
@@ -105,7 +107,7 @@ def generate_activation_functions(architecture):
 
 def generate_predict_function(architecture, debug_mode=True):
     input_scaling_parts = [
-        f"let x{j+1}_scaled = x{j+1} * 10000"
+        f"let x{j+1}_scaled = inputs[{j}] * 10000"
         for j in range(architecture[0]["input_features"])
     ]
     input_scaling = "\n    ".join(input_scaling_parts)
@@ -115,17 +117,17 @@ def generate_predict_function(architecture, debug_mode=True):
 
     predict_func_parts = [
         "@Callable(i)",
-        f"func predict({', '.join([f'x{j+1}: Int' for j in range(architecture[0]['input_features'])])}) = {{",
+        f"func predict(inputs: List[Int]) = {{",
         "    # Scale inputs",
         f"    {input_scaling}",
-        f"    let inputs = [{inputs_list}]",
+        f"    let scaled_inputs = [{inputs_list}]",
     ]
 
     for i in range(len(architecture)):
         if i == 0:
             predict_func_parts.extend(
                 [
-                    f"    let z{i+1} = linear_forward_{i+1}(inputs, weights_layer_{i+1}, biases_layer_{i+1})"
+                    f"    let z{i+1} = linear_forward_{i+1}(scaled_inputs, weights_layer_{i+1}, biases_layer_{i+1})"
                 ]
             )
             if architecture[i]["activation"]:
